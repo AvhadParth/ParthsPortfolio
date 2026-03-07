@@ -409,65 +409,44 @@
     var termCursor = document.createElement('span');
     termCursor.className = 'term-cursor';
 
-    var termData = [
-      { cmd: 'whoami',           outId: 'to1', out: 'parth_avhad // developer + designer' },
-      { cmd: 'cat skills.json',  outId: 'to3', out: '{ "stack": ["MERN","Python","DevOps"] }' },
-      { cmd: 'ls projects/',     outId: 'to5', out: 'VarshasCollections  FactMatrix  +3' },
-      { cmd: 'open --portfolio', outId: null,  out: null }
+    // Flat sequence — every line in exact order, no branching
+    var termSeq = [
+      { lineId:'tl0', elId:'tc0', text:'whoami',                                  fast:false },
+      { lineId:'tl1', elId:'to1', text:'parth_avhad // developer + designer',     fast:true  },
+      { lineId:'tl2', elId:'tc2', text:'cat skills.json',                         fast:false },
+      { lineId:'tl3', elId:'to3', text:'{ "stack": ["MERN","Python","DevOps"] }', fast:true  },
+      { lineId:'tl4', elId:'tc4', text:'ls projects/',                            fast:false },
+      { lineId:'tl5', elId:'to5', text:'VarshasCollections  FactMatrix  +3',      fast:true  },
+      { lineId:'tl6', elId:'tc6', text:'open --portfolio',                        fast:false }
     ];
 
-    function moveCursorTo(el) {
-      if (el.parentNode) el.parentNode.removeChild(el);
-      termCursor.parentNode && termCursor.parentNode.removeChild(termCursor);
-    }
-
-    function typeText(el, text, cb) {
-      // attach cursor to this element's parent line
+    function typeInto(el, text, fast, cb) {
+      if (termCursor.parentNode) termCursor.parentNode.removeChild(termCursor);
       el.parentNode && el.parentNode.appendChild(termCursor);
       var i = 0;
+      var speed = fast ? 16 : 58;
       (function tick() {
-        if (i <= text.length) {
-          el.textContent = text.slice(0, i++);
-          setTimeout(tick, 52 + Math.random() * 28);
-        } else if (cb) cb();
+        el.textContent = text.slice(0, i++);
+        if (i <= text.length) setTimeout(tick, speed + Math.random() * 20);
+        else if (cb) setTimeout(cb, fast ? 120 : 320);
       })();
     }
 
     setTimeout(function() {
-      var step = 0;
-      function runStep() {
-        if (step >= termData.length) return;
-        var d       = termData[step];
-        var cmdLine = document.getElementById('tl' + (step * 2));
-        var cmdEl   = document.getElementById('tc' + (step * 2));
-        var outLine = d.outId ? document.getElementById('tl' + (step * 2 + 1)) : null;
-        var outEl   = d.outId ? document.getElementById(d.outId) : null;
-
-        if (cmdLine) cmdLine.classList.add('visible');
-        typeText(cmdEl, d.cmd, function() {
-          if (outEl && outLine) {
-            setTimeout(function() {
-              outLine.classList.add('visible');
-              typeText(outEl, d.out, function() {
-                setTimeout(function() { step++; runStep(); }, 400);
-              });
-            }, 180);
-          } else {
-            step++; runStep();
-          }
+      var idx = 0;
+      function nextLine() {
+        if (idx >= termSeq.length) return;
+        var s    = termSeq[idx];
+        var line = document.getElementById(s.lineId);
+        var el   = document.getElementById(s.elId);
+        if (!line || !el) { idx++; nextLine(); return; }
+        line.classList.add('visible');
+        typeInto(el, s.text, s.fast, function() {
+          idx++;
+          nextLine();
         });
       }
-      runStep();
-
-      // final line
-      setTimeout(function() {
-        var lastLine = document.getElementById('tl6');
-        var lastCmd  = document.getElementById('tc6');
-        if (lastLine && lastCmd) {
-          lastLine.classList.add('visible');
-          typeText(lastCmd, 'open --portfolio', null);
-        }
-      }, 6200);
+      nextLine();
     }, 900);
 
     // ── GSAP (progressive enhancement) ───────────────────────────
