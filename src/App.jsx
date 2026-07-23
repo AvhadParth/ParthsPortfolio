@@ -522,17 +522,21 @@ export default function App() {
               <span className="contact-email-arrow"><ArrowIcon /></span>
             </a>
             <div className="contact-links">
-              {[
-                { label: 'GitHub', href: 'https://github.com/AvhadParth' },
-                { label: 'LinkedIn', href: 'https://linkedin.com/in/parth-avhad' },
-                { label: 'Portfolio', href: 'https://parths-portfolio.vercel.app/' },
-                { label: '+91 8433591056', href: 'tel:+918433591056' },
-              ].map(l => (
-                <a key={l.label} className="contact-link" href={l.href} target="_blank" rel="noopener noreferrer" onMouseEnter={onHoverEnter} onMouseLeave={onHoverLeave}>
-                  {l.label} <ArrowIcon />
-                </a>
-              ))}
-            </div>
+  {[
+    { label: 'GitHub', href: 'https://github.com/AvhadParth' },
+    { label: 'LinkedIn', href: 'https://linkedin.com/in/parth-avhad' },
+    { label: 'Resume', href: '/resume.pdf' },
+  ].map((link) => (
+    <a
+      key={link.label}
+      href={link.href}
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      {link.label}
+    </a>
+  ))}
+</div>
           </div>
         </div>
       </section>
