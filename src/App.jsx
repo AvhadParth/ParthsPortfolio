@@ -525,7 +525,7 @@ export default function App() {
   {[
     { label: 'GitHub', href: 'https://github.com/AvhadParth' },
     { label: 'LinkedIn', href: 'https://linkedin.com/in/parth-avhad' },
-    { label: 'Resume', href: '/resume.pdf' },
+    { label: 'Resume', href: '/PARTHRESUME.pdf' },
   ].map((link) => (
     <a
       key={link.label}
