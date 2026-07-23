@@ -524,7 +524,8 @@ export default function App() {
             <div className="contact-links">
   {[
     { label: 'GitHub', href: 'https://github.com/AvhadParth' },
-    { label: 'LinkedIn', href: 'https://linkedin.com/in/parth-avhad' },
+    { label: 'LinkedIn', href: 'https://linkedin.com/in/parthavhad
+ },
     { label: 'Resume', href: '/PARTHRESUME.pdf' },
   ].map((link) => (
     <a
