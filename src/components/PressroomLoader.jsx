@@ -7,14 +7,14 @@ export function PressroomLoader({ onComplete }) {
   const [printStage, setPrintStage] = useState('TYPESETTING EDITORIAL HEADLINES...');
 
   useEffect(() => {
-    // Smooth progress counter simulation over ~4.2 seconds
+    // Smooth progress counter simulation over ~3.5 seconds
     const interval = setInterval(() => {
       setProgress((prev) => {
         if (prev >= 100) {
           clearInterval(interval);
           setTimeout(() => {
             if (onComplete) onComplete();
-          }, 500);
+          }, 300);
           return 100;
         }
         const next = prev + 1;
@@ -24,7 +24,7 @@ export function PressroomLoader({ onComplete }) {
         else if (next >= 92) setPrintStage('EDITION PRINTED, BOUND & DELIVERED.');
         return next;
       });
-    }, 40); // 100 steps * 40ms = 4,000ms
+    }, 35); // 100 steps * 35ms = 3,500ms
 
     return () => clearInterval(interval);
   }, [onComplete]);
@@ -64,7 +64,7 @@ export function PressroomLoader({ onComplete }) {
         <motion.div 
           initial={{ y: -80, opacity: 0, scaleY: 0.2 }}
           animate={{ y: 0, opacity: 1, scaleY: 1 }}
-          transition={{ duration: 2.2, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 1.8, ease: [0.16, 1, 0.3, 1] }}
           className="relative w-full bg-[#F6F2E8] border-2 border-stone-400 rounded-sm p-6 sm:p-8 text-stone-900 shadow-2xl space-y-5 origin-top"
         >
           {/* Red Ink Cancellation Stamp Seal on Emerging Paper */}
