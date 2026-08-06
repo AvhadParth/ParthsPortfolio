@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
+import confetti from 'canvas-confetti';
 import { magazineIssueData } from '../data/portfolioData';
-import { Mail, Phone, MapPin, Send, CheckCircle, Stamp } from 'lucide-react';
+import { Mail, Phone, CheckCircle, Stamp, FileText, Download } from 'lucide-react';
 import { GithubIcon, LinkedinIcon } from './Icons';
 
 export function ColophonBackCover() {
@@ -11,6 +12,16 @@ export function ColophonBackCover() {
   const handleSubmit = (e) => {
     e.preventDefault();
     setSubmitted(true);
+    try {
+      confetti({
+        particleCount: 120,
+        spread: 80,
+        origin: { y: 0.6 },
+        colors: ['#c5a059', '#d93838', '#ffffff', '#2b5db8']
+      });
+    } catch (err) {
+      console.warn('Confetti error:', err);
+    }
   };
 
   return (
@@ -32,7 +43,7 @@ export function ColophonBackCover() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
-          {/* Left Column: Physical Airmail Envelope Contact Form (Forced High Contrast Cream Paper) */}
+          {/* Left Column: Physical Airmail Envelope Contact Form */}
           <div className="lg:col-span-7">
             <motion.div 
               initial={{ opacity: 0, y: 30 }}
@@ -142,12 +153,28 @@ export function ColophonBackCover() {
             </motion.div>
           </div>
 
-          {/* Right Column: Colophon & Social Directory */}
+          {/* Right Column: Colophon & Social Directory & Official Resume Download */}
           <div className="lg:col-span-5 space-y-8 font-mono-editorial text-xs">
             <div className="p-6 border border-paper-border bg-paper-ivory-warm dark:bg-paper-card space-y-6 rounded-xs editorial-shadow">
               <h3 className="font-display text-2xl font-bold text-graphite dark:text-paper-ivory border-b border-paper-border pb-3">
                 EDITORIAL COLOPHON
               </h3>
+
+              {/* Official Resume Download Box */}
+              <div className="p-4 bg-accent-champagne/15 border-2 border-accent-champagne/40 rounded-xs space-y-2">
+                <span className="font-bold text-accent-champagne text-[10px] uppercase tracking-wider block">RECRUITER EXECUTIVE DOSSIER</span>
+                <p className="text-graphite dark:text-paper-ivory text-xs font-bold">PARTH AVHAD'S OFFICIAL RESUME (PDF)</p>
+                <a
+                  href="/PARTHRESUME.pdf"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  download="PARTHRESUME.pdf"
+                  className="mt-2 inline-flex items-center gap-2 px-4 py-2 bg-graphite text-paper-ivory dark:bg-paper-ivory dark:text-graphite font-bold text-xs uppercase tracking-wider rounded-xs hover:bg-accent-champagne hover:text-graphite transition-all shadow-sm cursor-pointer"
+                >
+                  <Download className="w-4 h-4 text-accent-champagne" />
+                  <span>DOWNLOAD RESUME (PDF)</span>
+                </a>
+              </div>
 
               <div className="space-y-4 text-editorial-grey">
                 <div>

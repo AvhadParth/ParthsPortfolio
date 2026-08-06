@@ -1,5 +1,5 @@
 import React from 'react';
-import { Moon, Sun, BookOpen, Layers } from 'lucide-react';
+import { Moon, Sun, BookOpen, Layers, FileText } from 'lucide-react';
 
 export function MagazineMasthead({ isDark, setIsDark, activeMode, setActiveMode }) {
   const handleThemeToggle = () => {
@@ -33,7 +33,20 @@ export function MagazineMasthead({ isDark, setIsDark, activeMode, setActiveMode 
         </div>
 
         {/* Right: Controls & Toggles */}
-        <div className="flex items-center gap-3 sm:gap-6">
+        <div className="flex items-center gap-2 sm:gap-4">
+          {/* Resume Download Button */}
+          <a
+            href="/PARTHRESUME.pdf"
+            target="_blank"
+            rel="noopener noreferrer"
+            download="PARTHRESUME.pdf"
+            className="flex items-center gap-1.5 px-3 py-1 bg-amber-800 text-white font-bold rounded-xs hover:bg-accent-champagne hover:text-graphite transition-all shadow-xs"
+            title="Download Parth Avhad's Official Resume (PDF)"
+          >
+            <FileText className="w-3.5 h-3.5" />
+            <span>RESUME</span>
+          </a>
+
           {/* Mode Switcher */}
           <button 
             onClick={handleModeToggle}
