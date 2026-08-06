@@ -1,21 +1,12 @@
 import React from 'react';
-import { Volume2, VolumeX, Moon, Sun, BookOpen, Layers } from 'lucide-react';
-import { soundEngine } from '../utils/soundEngine';
+import { Moon, Sun, BookOpen, Layers } from 'lucide-react';
 
-export function MagazineMasthead({ isDark, setIsDark, soundEnabled, setSoundEnabled, activeMode, setActiveMode }) {
-  const handleSoundToggle = () => {
-    const newState = soundEngine.toggleSound();
-    setSoundEnabled(newState);
-    if (newState) soundEngine.playHoverClick();
-  };
-
+export function MagazineMasthead({ isDark, setIsDark, activeMode, setActiveMode }) {
   const handleThemeToggle = () => {
-    soundEngine.playPaperTurn();
     setIsDark(!isDark);
   };
 
   const handleModeToggle = () => {
-    soundEngine.playPaperTurn();
     setActiveMode(activeMode === 'scroll' ? 'flip' : 'scroll');
   };
 
@@ -37,32 +28,16 @@ export function MagazineMasthead({ isDark, setIsDark, soundEnabled, setSoundEnab
         </div>
 
         {/* Center: Issue Subtitle */}
-        <div className="hidden lg:block text-center font-editorial-serif italic text-sm text-graphite">
+        <div className="hidden lg:block text-center font-editorial-serif italic text-sm text-graphite dark:text-paper-ivory/80">
           "The Creative Engineering & Data Craft of Parth Avhad"
         </div>
 
         {/* Right: Controls & Toggles */}
         <div className="flex items-center gap-3 sm:gap-6">
-          {/* Sound Toggle */}
-          <button 
-            onClick={handleSoundToggle}
-            onMouseEnter={() => soundEngine.playHoverClick()}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
-            title="Toggle Tactile Paper Sound"
-          >
-            {soundEnabled ? (
-              <Volume2 className="w-3.5 h-3.5 text-accent-champagne animate-pulse" />
-            ) : (
-              <VolumeX className="w-3.5 h-3.5 text-editorial-grey" />
-            )}
-            <span className="hidden sm:inline">{soundEnabled ? 'SOUND ON' : 'MUTED'}</span>
-          </button>
-
           {/* Mode Switcher */}
           <button 
             onClick={handleModeToggle}
-            onMouseEnter={() => soundEngine.playHoverClick()}
-            className="flex items-center gap-1.5 px-2.5 py-1 border border-graphite/20 dark:border-paper-ivory/20 rounded hover:bg-graphite hover:text-paper-ivory dark:hover:bg-paper-ivory dark:hover:text-graphite transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-2.5 py-1 border border-graphite/20 dark:border-paper-ivory/20 rounded hover:bg-graphite hover:text-paper-ivory dark:hover:bg-paper-ivory dark:hover:text-graphite transition-all cursor-pointer text-graphite dark:text-paper-ivory"
             title="Toggle Layout View Mode"
           >
             {activeMode === 'scroll' ? (
@@ -81,8 +56,7 @@ export function MagazineMasthead({ isDark, setIsDark, soundEnabled, setSoundEnab
           {/* Theme Switcher */}
           <button 
             onClick={handleThemeToggle}
-            onMouseEnter={() => soundEngine.playHoverClick()}
-            className="p-1.5 rounded hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
+            className="p-1.5 rounded hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer text-graphite dark:text-paper-ivory"
             title="Toggle Paper Edition (Ivory / Onyx)"
           >
             {isDark ? (

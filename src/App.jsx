@@ -13,37 +13,14 @@ import { ColophonBackCover } from './components/ColophonBackCover';
 import { ProjectModal } from './components/ProjectModal';
 import { EditorialCursor } from './components/EditorialCursor';
 import { FlipbookReader } from './components/FlipbookReader';
-import { soundEngine } from './utils/soundEngine';
 
 export default function App() {
   const [isDark, setIsDark] = useState(false);
-  const [soundEnabled, setSoundEnabled] = useState(false);
   const [activeMode, setActiveMode] = useState('scroll'); // 'scroll' | 'flip'
   const [selectedProject, setSelectedProject] = useState(null);
 
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30, restDelta: 0.001 });
-
-  // Play satisfying paper page turn sound ONCE when entering a new chapter spread
-  useEffect(() => {
-    let currentActiveSection = '';
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting && entry.target.id && entry.target.id !== currentActiveSection) {
-            currentActiveSection = entry.target.id;
-            soundEngine.playPaperTurn();
-          }
-        });
-      },
-      { threshold: 0.3 }
-    );
-
-    const chapters = document.querySelectorAll('section[id^="chapter-"]');
-    chapters.forEach((sec) => observer.observe(sec));
-
-    return () => observer.disconnect();
-  }, [activeMode]);
 
   // Sync dark class with document element
   useEffect(() => {
@@ -56,7 +33,6 @@ export default function App() {
 
   const scrollToChapter = (chapterId) => {
     setActiveMode('scroll');
-    soundEngine.playPaperTurn();
     setTimeout(() => {
       const element = document.getElementById(`chapter-${chapterId}`);
       if (element) {
@@ -86,8 +62,6 @@ export default function App() {
       <MagazineMasthead 
         isDark={isDark}
         setIsDark={setIsDark}
-        soundEnabled={soundEnabled}
-        setSoundEnabled={setSoundEnabled}
         activeMode={activeMode}
         setActiveMode={setActiveMode}
       />

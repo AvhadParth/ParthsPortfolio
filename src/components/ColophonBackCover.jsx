@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { magazineIssueData } from '../data/portfolioData';
-import { soundEngine } from '../utils/soundEngine';
-import { Mail, Phone, Send, CheckCircle2, Stamp } from 'lucide-react';
+import { Mail, Phone, MapPin, Send, CheckCircle, Stamp } from 'lucide-react';
 import { GithubIcon, LinkedinIcon } from './Icons';
-import confetti from 'canvas-confetti';
 
 export function ColophonBackCover() {
   const [formState, setFormState] = useState({ name: '', email: '', subject: '', message: '' });
@@ -12,139 +10,118 @@ export function ColophonBackCover() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    soundEngine.playStamp();
     setSubmitted(true);
-    try {
-      confetti({
-        particleCount: 60,
-        spread: 70,
-        origin: { y: 0.8 },
-        colors: ['#C5A059', '#161616', '#b91c1c']
-      });
-    } catch (err) {
-      console.log('Confetti effect fired');
-    }
   };
 
   return (
-    <section id="chapter-07" className="min-h-screen py-20 px-4 sm:px-8 lg:px-12 border-b border-paper-border bg-paper-ivory dark:bg-paper-ivory-dark select-none">
-      <div className="max-w-7xl mx-auto">
-        {/* Editorial Top Bar */}
-        <div className="flex justify-between items-center font-mono-editorial text-xs text-editorial-grey border-b border-paper-border pb-4 mb-12">
-          <span>CHAPTER 07 / COLOPHON & CORRESPONDENCE</span>
-          <span>PAGE 44 – 48</span>
-          <span className="font-bold text-graphite dark:text-paper-ivory">BACK COVER</span>
+    <section id="chapter-07" className="py-20 px-4 sm:px-8 max-w-7xl mx-auto border-t-2 border-graphite dark:border-paper-border font-mono-editorial text-graphite dark:text-paper-ivory transition-colors duration-500">
+      <div className="space-y-12">
+        {/* Editorial Section Header */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-paper-border pb-6 gap-4">
+          <div>
+            <span className="text-xs text-accent-champagne font-bold tracking-widest uppercase block mb-1">
+              CHAPTER 07 • BACK COVER & CORRESPONDENCE
+            </span>
+            <h2 className="font-display text-4xl sm:text-5xl font-black uppercase text-graphite dark:text-paper-ivory">
+              LETTER TO THE EDITOR
+            </h2>
+          </div>
+          <div className="text-xs text-editorial-grey text-right hidden sm:block">
+            <span>DIRECT TELEGRAM & RECRUITER INQUIRY LINE</span>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
-          {/* Left Column: Realistic Physical Letter to the Editor Envelope */}
+          {/* Left Column: Physical Airmail Envelope Contact Form (Forced High Contrast Cream Paper) */}
           <div className="lg:col-span-7">
-            <div className="mb-6">
-              <span className="font-mono-editorial text-xs tracking-widest text-accent-champagne block mb-2 font-bold uppercase">
-                CORRESPONDENCE & INQUIRIES
-              </span>
-              <h2 className="font-display text-4xl sm:text-5xl font-extrabold uppercase tracking-tight text-graphite dark:text-paper-ivory">
-                LETTER TO THE EDITOR
-              </h2>
-            </div>
-
-            {/* Tactile Airmail Stationery Letter Container */}
             <motion.div 
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.8 }}
-              className="relative p-6 sm:p-10 border-2 border-graphite/30 dark:border-paper-border bg-[#F5F2E9] dark:bg-[#1C1C1C] rounded-sm shadow-2xl overflow-hidden font-mono-editorial"
+              transition={{ duration: 0.6 }}
+              className="relative p-6 sm:p-10 bg-[#FBF9F4] border-2 border-stone-400 rounded-sm shadow-2xl overflow-hidden text-stone-900"
             >
-              {/* Airmail Red & Blue Border Top Stripe */}
-              <div 
-                className="absolute top-0 inset-x-0 h-2 opacity-80"
-                style={{
-                  background: 'repeating-linear-gradient(135deg, #b91c1c, #b91c1c 15px, #f5f2e9 15px, #f5f2e9 25px, #1d4ed8 25px, #1d4ed8 40px, #f5f2e9 40px, #f5f2e9 50px)'
-                }}
-              />
+              {/* Red & Blue Vintage Airmail Envelope Border Strip */}
+              <div className="absolute top-0 left-0 right-0 h-3 bg-[repeating-linear-gradient(45deg,#d93838,#d93838_15px,#ffffff_15px,#ffffff_25px,#2b5db8_25px,#2b5db8_40px,#ffffff_40px,#ffffff_50px)] opacity-90" />
 
-              {/* Vintage Postal Cancellation Seal Stamp */}
-              <div className="absolute top-6 right-6 w-24 h-24 rounded-full border-2 border-dashed border-red-800/40 dark:border-accent-champagne/40 flex flex-col items-center justify-center rotate-12 text-[9px] text-red-900/60 dark:text-accent-champagne/60 font-bold pointer-events-none uppercase text-center p-1">
+              {/* Physical Airmail Stamp & Postmark */}
+              <div className="absolute top-6 right-6 w-24 h-24 rounded-full border-2 border-dashed border-red-800/60 bg-red-950/5 flex flex-col items-center justify-center rotate-12 text-[8px] text-red-900 font-bold uppercase tracking-widest pointer-events-none p-1">
                 <span>AIR MAIL</span>
                 <span className="text-[7px]">MUMBAI 2026</span>
-                <span className="text-[10px]">PARTH AVHAD</span>
+                <span className="text-[6px] text-stone-600">PARTH AVHAD</span>
               </div>
 
               {submitted ? (
-                <div className="py-12 text-center space-y-4">
-                  <CheckCircle2 className="w-16 h-16 text-accent-champagne mx-auto animate-bounce" />
-                  <h3 className="font-display text-3xl font-extrabold text-graphite dark:text-paper-ivory">
-                    LETTER SEALED & TRANSMITTED
-                  </h3>
-                  <p className="text-xs text-editorial-grey max-w-md mx-auto">
-                    Your correspondence has been logged into Parth Avhad's editor inbox. Expect a personal reply shortly.
+                <div className="py-16 text-center space-y-4">
+                  <div className="w-16 h-16 bg-green-100 text-green-700 rounded-full flex items-center justify-center mx-auto shadow-inner">
+                    <CheckCircle className="w-8 h-8" />
+                  </div>
+                  <h3 className="font-display text-2xl font-bold text-stone-900">LETTER TRANSMITTED</h3>
+                  <p className="font-editorial-serif text-base text-stone-700 italic max-w-md mx-auto">
+                    Thank you for your correspondence. Parth Avhad will review your note and respond promptly.
                   </p>
                   <button 
                     onClick={() => setSubmitted(false)}
-                    className="mt-6 px-6 py-2.5 border border-graphite text-xs font-bold text-graphite dark:text-paper-ivory hover:bg-graphite hover:text-paper-ivory transition-colors cursor-pointer"
+                    className="mt-4 px-6 py-2 bg-stone-900 text-white text-xs font-bold uppercase tracking-wider rounded-xs hover:bg-amber-800 transition-colors"
                   >
-                    WRITE ANOTHER LETTER
+                    SEND ANOTHER NOTE
                   </button>
                 </div>
               ) : (
-                <form onSubmit={handleSubmit} className="space-y-6 text-xs text-graphite dark:text-paper-ivory">
-                  {/* Letter Header Metadata */}
-                  <div className="border-b border-paper-border pb-4 space-y-2 text-[11px] text-editorial-grey">
-                    <p><strong className="text-graphite dark:text-paper-ivory">TO:</strong> PARTH AVHAD (Editor-in-Chief)</p>
-                    <p><strong className="text-graphite dark:text-paper-ivory">LOCATION:</strong> MUMBAI, INDIA</p>
-                    <p><strong className="text-graphite dark:text-paper-ivory">DATE:</strong> AUGUST 2026</p>
+                <form onSubmit={handleSubmit} className="space-y-6 pt-4">
+                  <div className="border-b border-stone-300 pb-3 mb-6">
+                    <span className="font-display text-xl font-bold text-stone-900 block">PARTH AVHAD EDITORIAL DESK</span>
+                    <span className="text-xs text-stone-600 font-mono-editorial">OFFICIAL CORRESPONDENCE FORM</span>
                   </div>
 
-                  {/* Inputs styled like fill-in-the-blank typewriter fields */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div className="space-y-1">
-                      <label className="text-editorial-grey uppercase font-bold block text-[10px]">FROM (YOUR NAME / ORG):</label>
+                      <label className="text-stone-700 uppercase font-bold block text-[10px]">FROM (YOUR NAME / ORG):</label>
                       <input 
                         type="text" 
                         required
                         placeholder="e.g. Eleanor Vance (Vogue Labs)"
                         value={formState.name}
                         onChange={(e) => setFormState({ ...formState, name: e.target.value })}
-                        className="w-full px-3 py-2 bg-transparent border-b-2 border-graphite/40 dark:border-paper-ivory/40 focus:border-accent-champagne outline-none text-graphite dark:text-paper-ivory font-bold transition-colors"
+                        className="w-full px-3 py-2 bg-white/80 border-b-2 border-stone-400 focus:border-amber-700 outline-none text-stone-900 placeholder-stone-400 font-bold transition-colors rounded-xs shadow-xs"
                       />
                     </div>
 
                     <div className="space-y-1">
-                      <label className="text-editorial-grey uppercase font-bold block text-[10px]">RETURN EMAIL ADDRESS:</label>
+                      <label className="text-stone-700 uppercase font-bold block text-[10px]">RETURN EMAIL ADDRESS:</label>
                       <input 
                         type="email" 
                         required
                         placeholder="e.g. eleanor@vogue.com"
                         value={formState.email}
                         onChange={(e) => setFormState({ ...formState, email: e.target.value })}
-                        className="w-full px-3 py-2 bg-transparent border-b-2 border-graphite/40 dark:border-paper-ivory/40 focus:border-accent-champagne outline-none text-graphite dark:text-paper-ivory font-bold transition-colors"
+                        className="w-full px-3 py-2 bg-white/80 border-b-2 border-stone-400 focus:border-amber-700 outline-none text-stone-900 placeholder-stone-400 font-bold transition-colors rounded-xs shadow-xs"
                       />
                     </div>
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-editorial-grey uppercase font-bold block text-[10px]">CORRESPONDENCE SUBJECT:</label>
+                    <label className="text-stone-700 uppercase font-bold block text-[10px]">CORRESPONDENCE SUBJECT:</label>
                     <input 
                       type="text" 
                       required
                       placeholder="e.g. Creative Engineering Role / Project Inquiry"
                       value={formState.subject}
                       onChange={(e) => setFormState({ ...formState, subject: e.target.value })}
-                      className="w-full px-3 py-2 bg-transparent border-b-2 border-graphite/40 dark:border-paper-ivory/40 focus:border-accent-champagne outline-none text-graphite dark:text-paper-ivory font-bold transition-colors"
+                      className="w-full px-3 py-2 bg-white/80 border-b-2 border-stone-400 focus:border-amber-700 outline-none text-stone-900 placeholder-stone-400 font-bold transition-colors rounded-xs shadow-xs"
                     />
                   </div>
 
                   {/* Lined Notebook Stationery Textarea */}
                   <div className="space-y-1">
-                    <label className="text-editorial-grey uppercase font-bold block text-[10px]">LETTER BODY / MESSAGE:</label>
+                    <label className="text-stone-700 uppercase font-bold block text-[10px]">LETTER BODY / MESSAGE:</label>
                     <textarea 
                       rows={6}
                       required
                       placeholder="Dear Editor, I am writing regarding..."
                       value={formState.message}
                       onChange={(e) => setFormState({ ...formState, message: e.target.value })}
-                      className="w-full p-4 bg-paper-ivory/60 dark:bg-paper-card/60 border border-paper-border focus:border-accent-champagne outline-none text-graphite dark:text-paper-ivory font-sans-editorial text-sm leading-relaxed transition-colors resize-none rounded-xs"
+                      className="w-full p-4 bg-white/90 border border-stone-300 focus:border-amber-700 outline-none text-stone-900 placeholder-stone-400 font-sans-editorial text-sm leading-relaxed transition-colors resize-none rounded-xs shadow-xs"
                     />
                   </div>
 
@@ -152,12 +129,11 @@ export function ColophonBackCover() {
                   <div className="pt-4 flex justify-end">
                     <motion.button 
                       type="submit"
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onMouseEnter={() => soundEngine.playHoverClick()}
-                      className="px-8 py-3.5 bg-red-900 text-white font-bold tracking-widest uppercase hover:bg-accent-champagne hover:text-graphite transition-all flex items-center gap-3 cursor-pointer shadow-xl rounded-xs border border-red-700"
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.97 }}
+                      className="px-8 py-3.5 bg-red-900 text-white font-bold tracking-widest uppercase hover:bg-amber-800 transition-all flex items-center gap-3 cursor-pointer shadow-xl rounded-xs border border-red-800"
                     >
-                      <Stamp className="w-4 h-4 text-accent-champagne" />
+                      <Stamp className="w-4 h-4 text-amber-300" />
                       <span>SEAL & TRANSMIT LETTER</span>
                     </motion.button>
                   </div>
@@ -168,7 +144,7 @@ export function ColophonBackCover() {
 
           {/* Right Column: Colophon & Social Directory */}
           <div className="lg:col-span-5 space-y-8 font-mono-editorial text-xs">
-            <div className="p-6 border border-paper-border bg-paper-ivory-warm dark:bg-paper-card space-y-6">
+            <div className="p-6 border border-paper-border bg-paper-ivory-warm dark:bg-paper-card space-y-6 rounded-xs editorial-shadow">
               <h3 className="font-display text-2xl font-bold text-graphite dark:text-paper-ivory border-b border-paper-border pb-3">
                 EDITORIAL COLOPHON
               </h3>
@@ -205,11 +181,11 @@ export function ColophonBackCover() {
                     </a>
                   </div>
                 </div>
+              </div>
 
-                <div className="border-t border-paper-border pt-4 text-[10px]">
-                  <p>© 2026 PARTH AVHAD. ALL RIGHTS RESERVED.</p>
-                  <p className="mt-1">TYPESET IN BODONI MODA & INTER. PRINTED ON DIGITAL PAPER.</p>
-                </div>
+              <div className="pt-4 border-t border-paper-border text-[10px] text-editorial-grey space-y-1">
+                <p>© 2026 PARTH AVHAD. ALL RIGHTS RESERVED.</p>
+                <p>TYPESET IN BODONI MODA & INTER. PRINTED ON DIGITAL PAPER.</p>
               </div>
             </div>
           </div>
