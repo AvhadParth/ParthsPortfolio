@@ -7,14 +7,14 @@ export function PressroomLoader({ onComplete }) {
   const [printStage, setPrintStage] = useState('TYPESETTING EDITORIAL HEADLINES...');
 
   useEffect(() => {
-    // Smooth progress counter simulation over ~3.5 seconds
+    // Fast, responsive progress counter over ~2.5 seconds
     const interval = setInterval(() => {
       setProgress((prev) => {
         if (prev >= 100) {
           clearInterval(interval);
           setTimeout(() => {
             if (onComplete) onComplete();
-          }, 300);
+          }, 150);
           return 100;
         }
         const next = prev + 1;
@@ -24,7 +24,7 @@ export function PressroomLoader({ onComplete }) {
         else if (next >= 92) setPrintStage('EDITION PRINTED, BOUND & DELIVERED.');
         return next;
       });
-    }, 35); // 100 steps * 35ms = 3,500ms
+    }, 24); // 100 steps * 24ms = 2,400ms
 
     return () => clearInterval(interval);
   }, [onComplete]);
@@ -33,7 +33,7 @@ export function PressroomLoader({ onComplete }) {
     <motion.div 
       initial={{ opacity: 1 }}
       exit={{ y: '-100%', opacity: 0 }}
-      transition={{ duration: 1.0, ease: [0.76, 0, 0.24, 1] }}
+      transition={{ duration: 0.6, ease: [0.76, 0, 0.24, 1] }}
       className="fixed inset-0 z-[100] bg-[#0C0C0C] text-paper-ivory flex flex-col justify-between p-6 sm:p-12 font-mono-editorial select-none overflow-hidden"
     >
       {/* Top Pressroom Status Header */}
@@ -55,7 +55,7 @@ export function PressroomLoader({ onComplete }) {
         <div className="w-full h-3 bg-gradient-to-r from-stone-800 via-stone-500 to-stone-800 rounded-full border border-white/20 shadow-xl relative z-20 flex justify-center items-center overflow-hidden">
           <motion.div 
             animate={{ x: ['-100%', '100%'] }}
-            transition={{ repeat: Infinity, duration: 1.8, ease: "linear" }}
+            transition={{ repeat: Infinity, duration: 1.2, ease: "linear" }}
             className="w-1/3 h-full bg-accent-champagne/70 rounded-full blur-[2px]" 
           />
         </div>
@@ -64,7 +64,7 @@ export function PressroomLoader({ onComplete }) {
         <motion.div 
           initial={{ y: -80, opacity: 0, scaleY: 0.2 }}
           animate={{ y: 0, opacity: 1, scaleY: 1 }}
-          transition={{ duration: 1.8, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
           className="relative w-full bg-[#F6F2E8] border-2 border-stone-400 rounded-sm p-6 sm:p-8 text-stone-900 shadow-2xl space-y-5 origin-top"
         >
           {/* Red Ink Cancellation Stamp Seal on Emerging Paper */}
