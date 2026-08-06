@@ -24,27 +24,26 @@ export default function App() {
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30, restDelta: 0.001 });
 
-  // Play tactile paper rustle sound while scrolling magazine spreads
+  // Play satisfying paper page turn sound ONCE when entering a new chapter spread
   useEffect(() => {
-    const handleWheelScroll = () => {
-      soundEngine.playScrollRustle();
-    };
+    let currentActiveSection = '';
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && entry.target.id && entry.target.id !== currentActiveSection) {
+            currentActiveSection = entry.target.id;
+            soundEngine.playPaperTurn();
+          }
+        });
+      },
+      { threshold: 0.3 }
+    );
 
-    window.addEventListener('wheel', handleWheelScroll, { passive: true });
-    window.addEventListener('touchmove', handleWheelScroll, { passive: true });
+    const chapters = document.querySelectorAll('section[id^="chapter-"]');
+    chapters.forEach((sec) => observer.observe(sec));
 
-    const unsubscribe = scrollYProgress.on('change', (v) => {
-      if (v > 0.01 && v < 0.99) {
-        soundEngine.playScrollRustle();
-      }
-    });
-
-    return () => {
-      window.removeEventListener('wheel', handleWheelScroll);
-      window.removeEventListener('touchmove', handleWheelScroll);
-      unsubscribe();
-    };
-  }, [scrollYProgress]);
+    return () => observer.disconnect();
+  }, [activeMode]);
 
   // Sync dark class with document element
   useEffect(() => {

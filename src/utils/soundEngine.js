@@ -4,7 +4,7 @@ class SoundEngine {
     this.ctx = null;
     this.enabled = true; // Enabled by default
     this.unlocked = false;
-    this.lastScrollTime = 0;
+    this.lastPageTurnTime = 0;
 
     // Attach global user interaction listener to bypass browser autoplay policies
     if (typeof window !== 'undefined') {
@@ -45,33 +45,44 @@ class SoundEngine {
     return this.enabled;
   }
 
-  // Mimics physical paper turn / rustle (Audible & Rich)
+  // Organic, satisfying physical paper page turn sound (Plays ONCE per section flip)
   playPaperTurn() {
     if (!this.enabled) return;
+    const now = Date.now();
+    if (now - this.lastPageTurnTime < 700) return; // Strict 700ms throttle guard
+    this.lastPageTurnTime = now;
+
     this.unlockAudio();
     if (!this.ctx) return;
 
     try {
-      const bufferSize = this.ctx.sampleRate * 0.15; // 150ms
+      const duration = 0.18; // 180ms organic page sweep
+      const bufferSize = Math.floor(this.ctx.sampleRate * duration);
       const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
       const data = buffer.getChannelData(0);
 
-      // Pink/filtered noise for crisp paper friction
+      // Organic filtered noise simulating paper sliding against paper
       for (let i = 0; i < bufferSize; i++) {
-        data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.35));
+        const t = i / bufferSize;
+        // Smooth swell & fade envelope
+        const envelope = Math.sin(t * Math.PI) * Math.exp(-t * 2);
+        data[i] = (Math.random() * 2 - 1) * envelope;
       }
 
       const noise = this.ctx.createBufferSource();
       noise.buffer = buffer;
 
+      // Low pass filter sweep (starts crisp 1400Hz, drops to deep 280Hz)
       const filter = this.ctx.createBiquadFilter();
       filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(1600, this.ctx.currentTime);
-      filter.frequency.exponentialRampToValueAtTime(400, this.ctx.currentTime + 0.15);
+      filter.frequency.setValueAtTime(1400, this.ctx.currentTime);
+      filter.frequency.exponentialRampToValueAtTime(280, this.ctx.currentTime + duration);
 
+      // Volume envelope
       const gain = this.ctx.createGain();
-      gain.gain.setValueAtTime(0.35, this.ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.15);
+      gain.gain.setValueAtTime(0.01, this.ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.22, this.ctx.currentTime + 0.04);
+      gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
 
       noise.connect(filter);
       filter.connect(gain);
@@ -79,48 +90,7 @@ class SoundEngine {
 
       noise.start();
     } catch (e) {
-      console.warn('Audio playback hindered:', e);
-    }
-  }
-
-  // Soft tactile paper slide sound for scrolling between sections (Audible & Throttled)
-  playScrollRustle() {
-    if (!this.enabled) return;
-    const now = Date.now();
-    if (now - this.lastScrollTime < 200) return; // Throttle to max once every 200ms
-    this.lastScrollTime = now;
-
-    this.unlockAudio();
-    if (!this.ctx) return;
-
-    try {
-      const bufferSize = this.ctx.sampleRate * 0.1; // 100ms rustle
-      const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-      const data = buffer.getChannelData(0);
-
-      for (let i = 0; i < bufferSize; i++) {
-        data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.4));
-      }
-
-      const noise = this.ctx.createBufferSource();
-      noise.buffer = buffer;
-
-      const filter = this.ctx.createBiquadFilter();
-      filter.type = 'bandpass';
-      filter.frequency.setValueAtTime(1100, this.ctx.currentTime);
-      filter.Q.setValueAtTime(1.2, this.ctx.currentTime);
-
-      const gain = this.ctx.createGain();
-      gain.gain.setValueAtTime(0.25, this.ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.1);
-
-      noise.connect(filter);
-      filter.connect(gain);
-      gain.connect(this.ctx.destination);
-
-      noise.start();
-    } catch (e) {
-      console.warn('Scroll audio hindered:', e);
+      console.warn('Paper page audio hindered:', e);
     }
   }
 
@@ -136,16 +106,16 @@ class SoundEngine {
 
       osc.type = 'sine';
       osc.frequency.setValueAtTime(900, this.ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(250, this.ctx.currentTime + 0.04);
+      osc.frequency.exponentialRampToValueAtTime(250, this.ctx.currentTime + 0.03);
 
-      gain.gain.setValueAtTime(0.12, this.ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + 0.04);
+      gain.gain.setValueAtTime(0.08, this.ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + 0.03);
 
       osc.connect(gain);
       gain.connect(this.ctx.destination);
 
       osc.start();
-      osc.stop(this.ctx.currentTime + 0.04);
+      osc.stop(this.ctx.currentTime + 0.03);
     } catch (e) {
       console.warn('Audio click hindered:', e);
     }
@@ -163,16 +133,16 @@ class SoundEngine {
 
       osc.type = 'triangle';
       osc.frequency.setValueAtTime(350, this.ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(60, this.ctx.currentTime + 0.1);
+      osc.frequency.exponentialRampToValueAtTime(60, this.ctx.currentTime + 0.08);
 
-      gain.gain.setValueAtTime(0.25, this.ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.1);
+      gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.08);
 
       osc.connect(gain);
       gain.connect(this.ctx.destination);
 
       osc.start();
-      osc.stop(this.ctx.currentTime + 0.1);
+      osc.stop(this.ctx.currentTime + 0.08);
     } catch (e) {
       console.warn('Audio stamp hindered:', e);
     }
