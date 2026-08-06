@@ -1,0 +1,141 @@
+@import "tailwindcss";
+
+/* Standard Editorial Reset & CSS Variables */
+:root {
+  --paper-ivory: #F7F4EE;
+  --paper-ivory-warm: #F0EDE5;
+  --paper-paper-card: #EFECE3;
+  --graphite: #161616;
+  --editorial-grey: #6E6E6E;
+  --light-grey: #E5E2DA;
+  --accent-champagne: #C5A059;
+  --paper-border: rgba(22, 22, 22, 0.12);
+}
+
+.dark {
+  --paper-ivory: #111111;
+  --paper-ivory-warm: #181818;
+  --paper-paper-card: #1E1E1E;
+  --graphite: #F4F1EA;
+  --editorial-grey: #A0A0A0;
+  --light-grey: #2A2A2A;
+  --accent-champagne: #D4AF37;
+  --paper-border: rgba(244, 241, 234, 0.14);
+}
+
+body {
+  background-color: var(--paper-ivory);
+  color: var(--graphite);
+  font-family: 'Inter', sans-serif;
+  margin: 0;
+  padding: 0;
+  transition: background-color 0.6s cubic-bezier(0.16, 1, 0.3, 1), color 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Typography Utility Classes */
+.font-display {
+  font-family: 'Bodoni Moda', 'Playfair Display', Georgia, serif;
+}
+
+.font-editorial-serif {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+}
+
+.font-sans-editorial {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.font-mono-editorial {
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+/* Paper Grain Texture Filter Overlay */
+.paper-texture-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+/* Swiss Grid Lines */
+.editorial-grid-border {
+  border-color: var(--paper-border);
+}
+
+.column-divider {
+  border-right: 1px solid var(--paper-border);
+}
+
+/* Drop Caps for Editorial Text */
+.drop-cap::first-letter {
+  font-family: 'Bodoni Moda', serif;
+  float: left;
+  font-size: 4.5rem;
+  line-height: 0.8;
+  padding-top: 4px;
+  padding-right: 14px;
+  padding-bottom: 0px;
+  color: var(--graphite);
+  font-weight: 700;
+}
+
+/* Custom Minimal Editorial Scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-track {
+  background: var(--paper-ivory);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--editorial-grey);
+  border-radius: 0px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--graphite);
+}
+
+/* 3D Flipbook Page Turning Effects */
+.perspective-1000 {
+  perspective: 1600px;
+}
+
+.transform-style-3d {
+  transform-style: preserve-3d;
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+}
+
+/* Vertical Text */
+.writing-mode-vertical {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+}
+
+/* Hover Lift Paper Shadow */
+.editorial-shadow {
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.08);
+  transition: box-shadow 0.4s ease, transform 0.4s ease;
+}
+
+.editorial-shadow:hover {
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.16);
+  transform: translateY(-2px);
+}
+
+/* Barcode SVG Animation */
+@keyframes barcodeScan {
+  0% { transform: translateY(-100%); opacity: 0; }
+  50% { opacity: 0.8; }
+  100% { transform: translateY(100%); opacity: 0; }
+}
+
+.scan-line {
+  animation: barcodeScan 3s ease-in-out infinite;
+}
