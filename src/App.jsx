@@ -13,8 +13,11 @@ import { ColophonBackCover } from './components/ColophonBackCover';
 import { ProjectModal } from './components/ProjectModal';
 import { EditorialCursor } from './components/EditorialCursor';
 import { FlipbookReader } from './components/FlipbookReader';
+import { PressroomLoader } from './components/PressroomLoader';
+import { AnimatePresence } from 'framer-motion';
 
 export default function App() {
+  const [isLoading, setIsLoading] = useState(true);
   const [isDark, setIsDark] = useState(false);
   const [activeMode, setActiveMode] = useState('scroll'); // 'scroll' | 'flip'
   const [selectedProject, setSelectedProject] = useState(null);
@@ -46,6 +49,11 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-paper-ivory dark:bg-paper-ivory-dark text-graphite dark:text-paper-ivory selection:bg-graphite selection:text-paper-ivory relative font-sans-editorial">
+      {/* Mechanical Printing Press Loader */}
+      <AnimatePresence>
+        {isLoading && <PressroomLoader onComplete={() => setIsLoading(false)} />}
+      </AnimatePresence>
+
       {/* Scroll Progress Bar at Very Top */}
       <motion.div 
         className="fixed top-0 left-0 right-0 h-1 bg-accent-champagne z-[100] origin-left"
