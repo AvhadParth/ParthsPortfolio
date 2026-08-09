@@ -158,25 +158,13 @@ export function ProjectFeatureStory({ project, index, onOpenModal }) {
 
             {/* Action Buttons */}
             <div className="flex flex-wrap items-center gap-4 border-t border-paper-border pt-6">
-              <button
-                onClick={() => {
-                  soundEngine.playStamp();
-                  onOpenModal(project);
-                }}
-                onMouseEnter={() => soundEngine.playHoverClick()}
-                className="flex items-center gap-2 px-6 py-3 bg-graphite text-paper-ivory dark:bg-paper-ivory dark:text-graphite font-mono-editorial text-xs font-bold rounded-xs hover:bg-accent-champagne hover:text-graphite transition-all cursor-pointer shadow-md"
-              >
-                <span>INTERACTIVE DEMO</span>
-                <ExternalLink className="w-3.5 h-3.5" />
-              </button>
-
               {project.liveDemoUrl && (
                 <a
                   href={project.liveDemoUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   onMouseEnter={() => soundEngine.playHoverClick()}
-                  className="flex items-center gap-2 px-5 py-3 bg-amber-800 text-white font-mono-editorial text-xs font-bold rounded-xs hover:bg-accent-champagne hover:text-graphite transition-colors shadow-xs"
+                  className="flex items-center gap-2 px-6 py-3 bg-amber-800 text-white font-mono-editorial text-xs font-bold rounded-xs hover:bg-accent-champagne hover:text-graphite transition-colors shadow-md"
                 >
                   <ExternalLink className="w-3.5 h-3.5" />
                   <span>LIVE WEBSITE</span>
@@ -188,7 +176,7 @@ export function ProjectFeatureStory({ project, index, onOpenModal }) {
                 target="_blank"
                 rel="noopener noreferrer"
                 onMouseEnter={() => soundEngine.playHoverClick()}
-                className="flex items-center gap-2 px-5 py-3 border border-paper-border hover:border-graphite font-mono-editorial text-xs text-graphite dark:text-paper-ivory font-bold rounded-xs transition-colors"
+                className="flex items-center gap-2 px-6 py-3 border border-paper-border hover:border-graphite font-mono-editorial text-xs text-graphite dark:text-paper-ivory font-bold rounded-xs transition-colors"
               >
                 <GithubIcon className="w-3.5 h-3.5" />
                 <span>SOURCE CODE</span>

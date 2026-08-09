@@ -101,7 +101,7 @@ export const magazineIssueData = {
       outcome: "Delivered a 60fps interactive 3D luxury jewelry showcase across mobile & desktop.",
       techStack: ["Three.js", "WebGL", "GSAP", "JavaScript", "HTML5", "CSS3"],
       githubUrl: "https://github.com/AvhadParth/AurumJewels",
-      liveDemoUrl: "https://github.com/AvhadParth/AurumJewels",
+      liveDemoUrl: "https://aurummaison.vercel.app/",
       quote: "Where century-old Place Vendôme benchwork meets modern 3D precision engineering."
     }
   ],
