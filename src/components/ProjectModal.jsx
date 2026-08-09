@@ -96,14 +96,25 @@ export function ProjectModal({ project, onClose }) {
 
               {/* Action Buttons */}
               <div className="flex flex-wrap gap-4 pt-2">
+                {project.liveDemoUrl && (
+                  <a
+                    href={project.liveDemoUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 py-3 bg-amber-800 text-white text-center font-bold uppercase tracking-widest hover:bg-accent-champagne hover:text-graphite transition-colors flex items-center justify-center gap-2 rounded-xs shadow-xs"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                    <span>VISIT LIVE WEBSITE</span>
+                  </a>
+                )}
                 <a
                   href={project.githubUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex-1 py-3 bg-graphite text-paper-ivory dark:bg-paper-ivory dark:text-graphite text-center font-bold uppercase tracking-widest hover:bg-accent-champagne hover:text-graphite transition-colors flex items-center justify-center gap-2"
+                  className="flex-1 py-3 bg-graphite text-paper-ivory dark:bg-paper-ivory dark:text-graphite text-center font-bold uppercase tracking-widest hover:bg-accent-champagne hover:text-graphite transition-colors flex items-center justify-center gap-2 rounded-xs shadow-xs"
                 >
                   <GithubIcon className="w-4 h-4" />
-                  <span>VIEW FULL REPOSITORY ON GITHUB</span>
+                  <span>VIEW SOURCE CODE ON GITHUB</span>
                 </a>
               </div>
             </div>

@@ -81,28 +81,28 @@ export const magazineIssueData = {
       quote: "In security, defense must adapt faster than deception."
     },
     {
-      id: "securenext",
+      id: "aurumjewels",
       featureNumber: "03",
-      year: "2025",
-      title: "SecureNext",
-      subtitle: "Security-First Application Architecture & RBAC Layer",
-      category: "FULL-STACK SECURITY",
-      metricValue: "JWT + RBAC",
-      metricLabel: "Security Standard",
+      year: "2026",
+      title: "Aurum Jewels",
+      subtitle: "3D Haute Joaillerie Web Experience & Place Vendôme Atelier",
+      category: "3D WEBGL / THREE.JS / LUXURY UI",
+      metricValue: "60 FPS 3D",
+      metricLabel: "WebGL Render Speed",
       coverImage: "/images/fact_matrix_editorial.png",
-      abstract: "Enterprise MERN stack application template built to mitigate OWASP Top 10 vulnerabilities through defense-in-depth security principles.",
-      challenge: "Enforcing granular RBAC and stateless session security.",
+      abstract: "High-end 3D web experience for Place Vendôme Haute Joaillerie maison featuring live 3D ring metal customizer, kinetic poetry typography, and Place Vendôme heritage storytelling.",
+      challenge: "Achieving real-time 60fps PBR diamond and gold shader rendering with smooth camera scroll pathing.",
       architecture: [
-        "Cryptographic password hashing via Bcrypt",
-        "Stateless session management via HttpOnly JWT",
-        "Role-Based Access Control (RBAC) middleware",
-        "MongoDB encrypted storage layers"
+        "Three.js & WebGL PBR material shader customizer",
+        "GSAP ScrollTrigger camera animation pathing",
+        "Place Vendôme Atelier heritage & collection showcase",
+        "Responsive VIP consultation drawer & gazette subscription"
       ],
-      outcome: "Zero unauthenticated data leaks in penetration benchmarks.",
-      techStack: ["React", "Node.js", "Express", "MongoDB", "JWT", "Bcrypt"],
-      githubUrl: "https://github.com/AvhadParth",
-      liveDemoUrl: "https://github.com/AvhadParth",
-      quote: "Security is the foundation upon which everything rests."
+      outcome: "Delivered a 60fps interactive 3D luxury jewelry showcase across mobile & desktop.",
+      techStack: ["Three.js", "WebGL", "GSAP", "JavaScript", "HTML5", "CSS3"],
+      githubUrl: "https://github.com/AvhadParth/AurumJewels",
+      liveDemoUrl: "https://github.com/AvhadParth/AurumJewels",
+      quote: "Where century-old Place Vendôme benchwork meets modern 3D precision engineering."
     }
   ],
   skillsCatalog: {

@@ -26,13 +26,13 @@ export function EditorialPressCollage({ project, index }) {
       editionNo: "REF: 978-0-2026-PG"
     },
     {
-      publication: "MONOCLE ENGINEERING QUARTERLY",
-      date: "ISSUE 44 • SECURITY",
-      headline: "SECURENEXT: DEFENSIVE MERN ARCHITECTURE DEMYSTIFIED",
-      excerpt: "Implementing strict RBAC authorization and multi-tier JWT token rotation to safeguard sensitive enterprise transactions.",
-      quote: "Zero-trust architecture built with pristine craftsman precision.",
-      stampText: "VERIFIED SECURITY",
-      editionNo: "REF: 978-0-2026-SN"
+      publication: "MONOCLE LUXURY GAZETTE",
+      date: "VOL. 44 • 3D HAUTE JOAILLERIE",
+      headline: "AURUM JEWELS REVOLUTIONIZES 3D HIGH JEWELRY WEBSITES",
+      excerpt: "Combining Three.js WebGL shaders with Place Vendôme savoir-faire, Parth Avhad delivers a breathtaking 60fps interactive luxury jewelry experience.",
+      quote: "A masterclass in 3D WebGL luxury craftsmanship.",
+      stampText: "PARIS HAUTE JOAILLERIE",
+      editionNo: "REF: 978-0-2026-AJ"
     }
   ];
 
