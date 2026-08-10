@@ -54,7 +54,7 @@ export function CoverSpread({ onExploreClick }) {
         <div className="flex items-center gap-6">
           <span className="flex items-center gap-1.5 text-accent-champagne font-bold">
             <Sparkles className="w-3 h-3 animate-spin" />
-            <span>SPECIAL EDITION: THE CREATIVE ENGINEER</span>
+            <span>SPECIAL EDITION: THE ENGINEER</span>
           </span>
         </div>
       </motion.div>
@@ -71,7 +71,7 @@ export function CoverSpread({ onExploreClick }) {
           PARTH AVHAD
         </h1>
         <p className="font-mono-editorial text-xs sm:text-sm tracking-[0.35em] uppercase text-editorial-grey mt-3">
-          CREATIVE ENGINEERING • CYBERSECURITY • DATA SCIENCE
+           ENGINEERING • DESIGNING • DATA SCIENCE
         </p>
       </motion.div>
 
@@ -127,7 +127,7 @@ export function CoverSpread({ onExploreClick }) {
               />
               <div className="absolute bottom-0 left-0 right-0 p-5 bg-gradient-to-t from-black/90 via-black/40 to-transparent text-white font-mono-editorial text-[10px] flex justify-between items-end">
                 <div>
-                  <p className="font-bold tracking-wider text-accent-champagne">FIG. 001 — PARTH AVHAD</p>
+                  <p className="font-bold tracking-wider text-accent-champagne">PARTH AVHAD</p>
                   <p className="opacity-80">SHAH & ANCHOR KUTCHHI ENG. COLLEGE</p>
                 </div>
                 <span className="text-accent-champagne font-bold">VOL 01 / 2026</span>
