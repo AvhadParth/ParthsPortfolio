@@ -110,7 +110,7 @@ export const magazineIssueData = {
     frameworks: ["React.js", "Node.js / Express", "FastAPI", "Flask", "WordPress", "Material-UI"],
     devTools: ["Git & GitHub", "Docker", "TravisCI", "Google Cloud Platform", "VS Code", "PyCharm", "IntelliJ IDEA"],
     designTools: ["Figma", "UI/UX Design", "Wireframing", "Prototyping", "User Flows"],
-    dataLibraries: ["pandas", "NumPy", "Matplotlib", "Scikit-Learn", "Data Pipelines"]
+    dataLibraries: ["Tableau", "PowerBI", "Python", "MS-Excel", "R"]
   },
   experienceChronicles: [
     {
