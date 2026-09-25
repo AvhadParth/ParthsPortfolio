@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local design reference (large video, not for deployment)
+public/screen_recording/

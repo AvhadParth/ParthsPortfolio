@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>Parth Avhad</title>
+  <rect width="64" height="64" rx="15" fill="#0b0b0b"/>
+  <g fill="none" stroke="#f4f4f1" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round">
+    <!-- P -->
+    <path d="M13.5 47V17H23a8.5 8.5 0 0 1 0 17h-9.5"/>
+    <!-- A -->
+    <path d="M33.5 47L43 17l9.5 30"/>
+    <!-- wave crossbar, echoing the gallery's curved strip -->
+    <path d="M36.7 37.5c2-2.4 4.2-2.4 6.3 0s4.3 2.4 6.3 0"/>
+  </g>
+</svg>

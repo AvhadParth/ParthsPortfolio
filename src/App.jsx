@@ -1,157 +1,290 @@
-import React, { useState, useEffect } from 'react';
-import { motion, useScroll, useSpring } from 'framer-motion';
-import './styles/editorial.css';
-import { magazineIssueData } from './data/portfolioData';
-import { MagazineMasthead } from './components/MagazineMasthead';
-import { CoverSpread } from './components/CoverSpread';
-import { TableOfContents } from './components/TableOfContents';
-import { EditorsLetter } from './components/EditorsLetter';
-import { ProjectFeatureStory } from './components/ProjectFeatureStory';
-import { SkillsCatalog } from './components/SkillsCatalog';
-import { ChroniclesJournal } from './components/ChroniclesJournal';
-import { ColophonBackCover } from './components/ColophonBackCover';
-import { ProjectModal } from './components/ProjectModal';
-import { EditorialCursor } from './components/EditorialCursor';
-import { FlipbookReader } from './components/FlipbookReader';
-import { PressroomLoader } from './components/PressroomLoader';
-import { AnimatePresence } from 'framer-motion';
+import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { profile, projects } from './data/projects'
+import { buildSlots, getLayout, getRingHolePx, isLowPowerDevice, isWebGLAvailable, prefersReducedMotion } from './gallery/config'
+import { nav, nearestPositionFor, wrapIndex } from './gallery/navStore'
+import { composeLabel, composeMedia, ensureFonts } from './gallery/textures'
+import { useGalleryControls } from './gallery/useGalleryControls'
+import { ProjectPanel } from './gallery/ProjectPanel'
+import { ProjectIndex } from './gallery/ProjectIndex'
+import { CornerNav, Loader, ProfileOverlay } from './gallery/Interface'
+
+const MIN_LOADER_MS = 1100
+
+// three.js is only downloaded when the 3D gallery is actually used.
+const GalleryCanvas = lazy(() => import('./gallery/GalleryCanvas').then((m) => ({ default: m.GalleryCanvas })))
+
+function useReducedMotion() {
+  const [reduced, setReduced] = useState(prefersReducedMotion)
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const onChange = () => setReduced(mq.matches)
+    mq.addEventListener('change', onChange)
+    return () => mq.removeEventListener('change', onChange)
+  }, [])
+  return reduced
+}
+
+function useViewportSize() {
+  const [size, setSize] = useState({ w: window.innerWidth, h: window.innerHeight })
+  useEffect(() => {
+    const onResize = () => setSize({ w: window.innerWidth, h: window.innerHeight })
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
+  return size
+}
 
 export default function App() {
-  const [isLoading, setIsLoading] = useState(true);
-  const [isDark, setIsDark] = useState(false);
-  const [activeMode, setActiveMode] = useState('scroll'); // 'scroll' | 'flip'
-  const [selectedProject, setSelectedProject] = useState(null);
+  const canUse3D = useMemo(() => isWebGLAvailable() && !isLowPowerDevice(), [])
+  const reducedMotion = useReducedMotion()
+  const viewport = useViewportSize()
+  const slots = useMemo(() => buildSlots(projects), [])
 
-  const { scrollYProgress } = useScroll();
-  const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30, restDelta: 0.001 });
+  const [view, setView] = useState(canUse3D ? 'featured' : 'full')
+  const [cardCanvases, setCardCanvases] = useState(null)
+  const [ready, setReady] = useState(false)
+  const [introKey, setIntroKey] = useState(0)
 
-  // Sync dark class with document element
+  // 'gallery' → 'opening' → 'project' → 'closing' → 'gallery'
+  const [phase, setPhase] = useState('gallery')
+  const [activeSlot, setActiveSlot] = useState(null)
+  const [activeIndex, setActiveIndex] = useState(null)
+  const [standalone, setStandalone] = useState(false)
+  const [profileOpen, setProfileOpen] = useState(false)
+  const [ringMounted, setRingMounted] = useState(false)
+
+  const stageRef = useRef()
+  const lastFocus = useRef(null)
+
+  // Preload fonts + compose card textures before revealing the gallery.
   useEffect(() => {
-    if (isDark) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [isDark]);
-
-  const scrollToChapter = (chapterId) => {
-    setActiveMode('scroll');
-    setTimeout(() => {
-      const element = document.getElementById(`chapter-${chapterId}`);
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth' });
-      } else if (chapterId === '01') {
-        const letter = document.getElementById('chapter-01');
-        if (letter) letter.scrollIntoView({ behavior: 'smooth' });
+    let cancelled = false
+    const started = performance.now()
+    ;(async () => {
+      await ensureFonts()
+      let canvases = null
+      if (canUse3D) {
+        const list = await Promise.all(projects.map(async (p) => ({ media: await composeMedia(p), label: composeLabel(p) })))
+        canvases = new Map(projects.map((p, i) => [p.id, list[i]]))
       }
-    }, 100);
-  };
+      const wait = Math.max(0, MIN_LOADER_MS - (performance.now() - started))
+      setTimeout(() => {
+        if (cancelled) return
+        setCardCanvases(canvases)
+        setReady(true)
+      }, wait)
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [canUse3D])
+
+  const onLoaderGone = useCallback(() => setIntroKey((k) => k + 1), [])
+
+  const layout = getLayout(slots.length, viewport.w, viewport.h)
+  // On-screen width of one card step near the focus, used to map drag pixels → slots.
+  const slotWidthPx = useCallback(() => {
+    const l = getLayout(slots.length, window.innerWidth, window.innerHeight)
+    const tanX = Math.tan((l.fov * Math.PI) / 360) * (window.innerWidth / window.innerHeight)
+    return (l.pitch / (2 * l.waveDepth * tanX)) * window.innerWidth
+  }, [slots.length])
+
+  const openSlot = useCallback(
+    (slot) => {
+      if (phase !== 'gallery') return
+      lastFocus.current = document.activeElement
+      setProfileOpen(false)
+      setStandalone(false)
+      setActiveSlot(slot)
+      setActiveIndex(slots[slot].projectIndex)
+      setPhase('opening')
+    },
+    [phase, slots],
+  )
+
+  const onTap = useCallback(
+    (x, y) => {
+      const slot = nav.pick ? nav.pick(x, y) : -1
+      if (slot >= 0) openSlot(slot)
+    },
+    [openSlot],
+  )
+
+  const openCentered = useCallback(() => openSlot(wrapIndex(Math.round(nav.current), slots.length)), [openSlot, slots.length])
+
+  const openFromIndex = useCallback(
+    (index) => {
+      if (phase !== 'gallery') return
+      lastFocus.current = document.activeElement
+      setStandalone(true)
+      setActiveIndex(index)
+      setPhase('project')
+    },
+    [phase],
+  )
+
+  const onOpened = useCallback(() => setPhase('project'), [])
+
+  const restoreFocus = () => {
+    const el = lastFocus.current
+    if (el && document.contains(el)) el.focus({ preventScroll: true })
+  }
+
+  const onClosed = useCallback(() => {
+    setPhase('gallery')
+    setActiveSlot(null)
+    setActiveIndex(null)
+    restoreFocus()
+  }, [])
+
+  const onPanelClose = useCallback(() => {
+    if (standalone) {
+      setPhase('gallery')
+      setActiveIndex(null)
+      setStandalone(false)
+      restoreFocus()
+    } else {
+      setPhase('closing')
+    }
+  }, [standalone])
+
+  const toggleProfile = useCallback(() => {
+    if (phase !== 'gallery') return
+    if (!profileOpen && canUse3D) setRingMounted(true)
+    setProfileOpen(!profileOpen)
+  }, [phase, profileOpen, canUse3D])
+
+  const goHome = useCallback(() => {
+    setProfileOpen(false)
+    if (canUse3D) setView('featured')
+    nav.target = Math.round(nav.target / slots.length) * slots.length
+  }, [canUse3D, slots.length])
+
+  const onRingHidden = useCallback(() => setRingMounted(false), [])
+
+  // Escape closes the profile.
+  useEffect(() => {
+    if (!profileOpen) return
+    const onKey = (e) => e.key === 'Escape' && setProfileOpen(false)
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [profileOpen])
+
+  // Default cursor; Drum switches it to 'pointer' while hovering a card.
+  useEffect(() => {
+    document.documentElement.dataset.cursor = 'grab'
+  }, [])
+
+  const featured = view === 'featured' && canUse3D
+  useGalleryControls(stageRef, {
+    enabled: featured && ready && phase === 'gallery',
+    slotWidthPx,
+    onActivate: openCentered,
+    onTap,
+  })
+
+  // Accessible, focusable list of projects that drives the drum.
+  const focusProject = (index) => {
+    let best = null
+    slots.forEach((s, i) => {
+      if (s.projectIndex !== index) return
+      const pos = nearestPositionFor(i, nav.target, slots.length)
+      if (best == null || Math.abs(pos - nav.target) < Math.abs(best.pos - nav.target)) best = { pos, slot: i }
+    })
+    if (best) nav.target = best.pos
+    return best
+  }
+
+  const activeProject = activeIndex != null ? projects[activeIndex] : null
+  const showPanel = activeProject && phase === 'project'
+  const ringHole = getRingHolePx(layout, viewport.w, viewport.h)
 
   return (
-    <div className="min-h-screen bg-paper-ivory dark:bg-paper-ivory-dark text-graphite dark:text-paper-ivory selection:bg-graphite selection:text-paper-ivory relative font-sans-editorial">
-      {/* Mechanical Printing Press Loader */}
-      <AnimatePresence>
-        {isLoading && <PressroomLoader onComplete={() => setIsLoading(false)} />}
-      </AnimatePresence>
+    <div className={`app view-${view}${phase !== 'gallery' ? ' is-locked' : ''}${profileOpen ? ' is-profile' : ''}${canUse3D ? '' : ' no-3d'}${ringMounted ? ' is-ring' : ''}`}>
+      <h1 className="sr-only">
+        {profile.name} — {profile.role}
+      </h1>
 
-      {/* Scroll Progress Bar at Very Top */}
-      <motion.div 
-        className="fixed top-0 left-0 right-0 h-1 bg-accent-champagne z-[100] origin-left"
-        style={{ scaleX }}
-      />
-
-      {/* Real-time Paper Texture Noise Layer */}
-      <div className="paper-texture-overlay"></div>
-
-      {/* Dynamic Editorial Cursor */}
-      <EditorialCursor />
-
-      {/* Top Sticky Magazine Masthead */}
-      <MagazineMasthead 
-        isDark={isDark}
-        setIsDark={setIsDark}
-        activeMode={activeMode}
-        setActiveMode={setActiveMode}
-      />
-
-      {/* Main Magazine Body View (Spread Scroll or Flipbook Reader) */}
-      {activeMode === 'scroll' ? (
-        <main className="relative">
-          {/* Cover Spread */}
-          <CoverSpread onExploreClick={() => scrollToChapter('01')} />
-
-          {/* Table of Contents */}
-          <TableOfContents onSelectChapter={scrollToChapter} />
-
-          {/* Chapter 01: Editor's Letter */}
-          <EditorsLetter />
-
-          {/* Chapter 02: Chronicles & Experience (MOVED UP FOR RECRUITERS) */}
-          <ChroniclesJournal />
-
-          {/* Chapters 03 - 05: Feature Stories (Projects) */}
-          {magazineIssueData.projects.map((project, idx) => (
-            <ProjectFeatureStory 
-              key={project.id}
-              project={project}
-              index={idx}
-              onOpenModal={(p) => setSelectedProject(p)}
+      {canUse3D && (
+        <div
+          ref={stageRef}
+          className={`stage${featured ? '' : ' is-inactive'}${!featured && ringMounted ? ' is-ring' : ''}`}
+          tabIndex={featured ? 0 : -1}
+          role="region"
+          aria-roledescription="3D gallery"
+          aria-label="Project gallery. Use the arrow keys to browse and Enter to open the centred project."
+        >
+          {cardCanvases && (
+            <Suspense fallback={null}>
+            <GalleryCanvas
+              slots={slots}
+              active={featured}
+              cardCanvases={cardCanvases}
+              phase={phase}
+              activeSlot={activeSlot}
+              reducedMotion={reducedMotion}
+              onOpened={onOpened}
+              onClosed={onClosed}
+              introKey={introKey}
+              profileOpen={profileOpen}
+              ringMounted={ringMounted}
+              onRingHidden={onRingHidden}
             />
-          ))}
-
-          {/* Chapter 06: Skills Catalog */}
-          <SkillsCatalog />
-
-          {/* Chapter 07 & Back Cover: Colophon */}
-          <ColophonBackCover />
-        </main>
-      ) : (
-        <FlipbookReader onSwitchToScroll={() => setActiveMode('scroll')} />
-      )}
-
-      {/* Floating Bottom Magazine Reading HUD */}
-      {activeMode === 'scroll' && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-paper-ivory/90 dark:bg-paper-card/90 border border-paper-border px-5 py-2.5 rounded-full backdrop-blur-md shadow-xl flex items-center gap-6 font-mono-editorial text-[10px] text-editorial-grey">
-          <span className="font-bold text-graphite dark:text-paper-ivory">PARTH AVHAD</span>
-          <div className="flex gap-3">
-            <button 
-              onClick={() => scrollToChapter('01')} 
-              className="hover:text-accent-champagne cursor-pointer transition-colors"
-            >
-              LETTER
-            </button>
-            <span>•</span>
-            <button 
-              onClick={() => scrollToChapter('02')} 
-              className="hover:text-accent-champagne cursor-pointer transition-colors font-bold text-graphite dark:text-paper-ivory"
-            >
-              EXPERIENCE
-            </button>
-            <span>•</span>
-            <button 
-              onClick={() => scrollToChapter('03')} 
-              className="hover:text-accent-champagne cursor-pointer transition-colors"
-            >
-              WORKS
-            </button>
-            <span>•</span>
-            <button 
-              onClick={() => scrollToChapter('06')} 
-              className="hover:text-accent-champagne cursor-pointer transition-colors"
-            >
-              CATALOG
-            </button>
-          </div>
+            </Suspense>
+          )}
         </div>
       )}
 
-      {/* Interactive Project Deep Dive Modal */}
-      {selectedProject && (
-        <ProjectModal 
-          project={selectedProject} 
-          onClose={() => setSelectedProject(null)} 
+      {featured && (
+        <ul className="a11y-list" aria-label="Projects">
+          {projects.map((p, i) => (
+            <li key={p.id}>
+              <button
+                onFocus={() => focusProject(i)}
+                onClick={() => {
+                  const best = focusProject(i)
+                  if (best) openSlot(best.slot)
+                }}
+              >
+                {String(i + 1).padStart(2, '0')} — {p.title}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {view === 'full' && ready && <ProjectIndex projects={projects} onOpen={openFromIndex} reducedMotion={reducedMotion} />}
+
+      <ProfileOverlay open={profileOpen} ringSize={canUse3D ? ringHole : Math.min(viewport.w * 0.86, 560)} />
+
+      <CornerNav
+        view={view}
+        canUse3D={canUse3D}
+        profileOpen={profileOpen}
+        hidden={!ready || phase !== 'gallery'}
+        onHome={goHome}
+        onToggleProfile={toggleProfile}
+        onSetView={(v) => {
+          if (v === view) return
+          setProfileOpen(false)
+          setRingMounted(false)
+          setView(v)
+        }}
+      />
+
+      {showPanel && (
+        <ProjectPanel
+          key={activeProject.id}
+          project={activeProject}
+          index={activeIndex}
+          total={projects.length}
+          standalone={standalone || !featured}
+          reducedMotion={reducedMotion}
+          onClose={onPanelClose}
         />
       )}
+
+      <Loader done={ready} onGone={onLoaderGone} />
     </div>
-  );
+  )
 }

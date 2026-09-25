@@ -1,0 +1,634 @@
+/* ------------------------------------------------------------------
+   3D gallery portfolio — global styles
+   ------------------------------------------------------------------ */
+
+:root {
+  --bg: #000;
+  --fg: #f4f4f1;
+  --fg-dim: rgba(244, 244, 241, 0.45);
+  --panel: #fff;
+  --ink: #0e0e0e;
+  --ink-dim: #5c5c5c;
+  --chip: #efefed;
+  --ui-font: 'Inter Tight', 'Helvetica Neue', Arial, sans-serif;
+  --gutter: clamp(16px, 2.6vw, 48px);
+  --corner-x: clamp(18px, 5.3vw, 96px);
+  --corner-y: clamp(18px, 5vh, 48px);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--ui-font);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 1px solid currentColor;
+  outline-offset: 4px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.app {
+  position: fixed;
+  inset: 0;
+}
+
+/* ---------- Stage ---------- */
+
+.stage {
+  position: absolute;
+  inset: 0;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: opacity 0.6s var(--ease-out);
+}
+.stage:focus-visible {
+  outline: none;
+}
+.stage.is-inactive {
+  opacity: 0;
+  pointer-events: none;
+}
+/* FULL view profile: the stage comes back to show the glass ring (no cards/floor). */
+.stage.is-inactive.is-ring {
+  opacity: 1;
+}
+.stage-canvas {
+  position: absolute !important;
+  inset: 0;
+}
+.view-featured .stage canvas {
+  cursor: grab;
+}
+html[data-cursor='pointer'] .view-featured .stage canvas {
+  cursor: pointer;
+}
+html[data-dragging='true'] .view-featured .stage canvas {
+  cursor: grabbing;
+}
+.is-locked .stage canvas {
+  cursor: default !important;
+}
+
+/* ---------- Corner navigation ---------- */
+
+.corner {
+  position: fixed;
+  z-index: 30;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--fg);
+  transition: opacity 0.5s var(--ease-out);
+}
+.corner-tl {
+  top: var(--corner-y);
+  left: var(--corner-x);
+}
+.corner-tr {
+  top: var(--corner-y);
+  right: var(--corner-x);
+}
+.corner-bl {
+  bottom: var(--corner-y);
+  left: var(--corner-x);
+  display: flex;
+  gap: 6px;
+}
+.corner-br {
+  bottom: var(--corner-y);
+  right: var(--corner-x);
+}
+.corner-bl button {
+  color: var(--fg-dim);
+  text-transform: uppercase;
+  transition: color 0.3s;
+}
+.corner-bl button.is-active,
+.corner-bl button:hover {
+  color: var(--fg);
+}
+.corner-bl span {
+  color: var(--fg-dim);
+}
+.corner:is(a, button):hover {
+  opacity: 0.6;
+}
+.corners.is-hidden .corner {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ---------- Accessible project list (visible on keyboard focus) ---------- */
+
+.a11y-list {
+  position: fixed;
+  left: 50%;
+  bottom: var(--gutter);
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  z-index: 31;
+}
+.a11y-list button {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  padding: 7px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 999px;
+  background: #000;
+  opacity: 0;
+  pointer-events: none;
+}
+.a11y-list button:focus-visible {
+  opacity: 1;
+  pointer-events: auto;
+  outline: none;
+}
+
+/* ---------- Loader ---------- */
+
+.loader {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  background: var(--bg);
+  transition: opacity 0.7s var(--ease-out);
+}
+.loader.is-done {
+  opacity: 0;
+  pointer-events: none;
+}
+.loader-dash {
+  width: 22px;
+  height: 1.5px;
+  background: var(--fg);
+  transform: scaleX(0);
+  transform-origin: left center;
+  animation: dash 1.2s var(--ease-out) infinite;
+}
+.loader-dash:nth-child(2) {
+  animation-delay: 0.18s;
+}
+.loader-dash:nth-child(3) {
+  animation-delay: 0.36s;
+}
+@keyframes dash {
+  0% {
+    transform: scaleX(0);
+    transform-origin: left center;
+  }
+  45% {
+    transform: scaleX(1);
+    transform-origin: left center;
+  }
+  55% {
+    transform: scaleX(1);
+    transform-origin: right center;
+  }
+  100% {
+    transform: scaleX(0);
+    transform-origin: right center;
+  }
+}
+
+/* ---------- Profile ---------- */
+
+.profile {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.5s var(--ease-out);
+}
+.profile:focus {
+  outline: none;
+}
+.profile.is-open {
+  opacity: 1;
+  /* Wait for the ring to grow out of the wall before the text fades in. */
+  transition: opacity 0.8s var(--ease-out) 1.1s;
+}
+.no-3d.view-full .profile.is-open {
+  transition-delay: 0.1s;
+}
+.no-3d.view-full .profile.is-open {
+  background: rgba(0, 0, 0, 0.92);
+  pointer-events: auto;
+}
+/* With 3D, the glass ring refracts an identical copy of the list drawn in the scene.
+   Swap instantly (no crossfade → no double image) for as long as the ring exists. */
+.app:not(.no-3d).view-full.is-ring .index {
+  opacity: 0;
+  pointer-events: none;
+  transition: none;
+}
+.index {
+  transition: opacity 0.5s var(--ease-out);
+}
+.profile-inner {
+  width: calc(var(--ring-size) * 0.8);
+  max-width: 460px;
+  text-align: center;
+  pointer-events: auto;
+}
+.profile:not(.is-open) .profile-inner {
+  pointer-events: none;
+}
+.profile-bio {
+  margin: 0;
+  font-size: clamp(11px, 1.05vw, 15px);
+  line-height: 1.42;
+  color: var(--fg);
+}
+.profile-highlight {
+  margin: 1.6em 0 0;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+}
+.profile-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin: 1.6em 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.profile-links li {
+  display: flex;
+  gap: 10px;
+}
+.profile-links a {
+  text-decoration: none;
+}
+.profile-links a:hover {
+  opacity: 0.6;
+}
+
+/* ---------- Index ("Full" view / 2D fallback) ---------- */
+
+/* Fade content out under the fixed corner labels while scrolling. */
+.view-full::before,
+.view-full::after {
+  content: '';
+  position: fixed;
+  left: 0;
+  right: 0;
+  z-index: 25;
+  height: calc(var(--gutter) * 2 + 16px);
+  pointer-events: none;
+}
+.view-full::before {
+  top: 0;
+  background: linear-gradient(#000 40%, rgba(0, 0, 0, 0));
+}
+.view-full::after {
+  bottom: 0;
+  background: linear-gradient(rgba(0, 0, 0, 0), #000 60%);
+}
+
+.index {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  overflow-y: auto;
+  padding: calc(var(--corner-y) * 2 + 24px) var(--gutter);
+  animation: fade-in 0.7s var(--ease-out);
+}
+.index-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: baseline;
+  max-width: min(980px, 100%);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: clamp(22px, 2.3vw, 34px);
+  line-height: 1.45;
+  letter-spacing: -0.015em;
+  text-align: center;
+}
+.index-list li {
+  display: inline-flex;
+  align-items: baseline;
+}
+.index-name {
+  color: var(--fg);
+  transition: opacity 0.35s var(--ease-out);
+}
+.index-list.has-active .index-name:not(.is-active) {
+  opacity: 0.35;
+}
+.index-name:focus-visible {
+  outline: none;
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+  text-decoration-thickness: 1px;
+}
+.index-dot {
+  margin: 0 0.42em;
+  opacity: 0.6;
+}
+.index-preview {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 26;
+  width: clamp(200px, 22vw, 330px);
+  aspect-ratio: 1280 / 752;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #111;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
+  pointer-events: none;
+  transform-origin: 20% 80%;
+  animation: preview-in 0.35s var(--ease-out);
+}
+.index-preview video,
+.index-preview img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+@keyframes preview-in {
+  from {
+    opacity: 0;
+    scale: 0.85;
+  }
+}
+
+/* ---------- Case-study panel ---------- */
+
+.panel-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+}
+.panel-layer.is-standalone {
+  background: rgba(0, 0, 0, 0.7);
+  animation: fade-in 0.4s var(--ease-out);
+}
+.panel {
+  position: absolute;
+  overflow: hidden;
+  background: var(--panel);
+  color: var(--ink);
+}
+.panel-scroll {
+  height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: grid;
+  grid-template-columns: minmax(280px, 0.72fr) 1fr;
+  gap: clamp(24px, 4vw, 72px);
+  padding: clamp(24px, 3.2vw, 44px) clamp(80px, 7vw, 120px) clamp(24px, 3.2vw, 44px) clamp(20px, 2.6vw, 40px);
+}
+.panel-info {
+  position: sticky;
+  top: 0;
+  align-self: start;
+  max-width: 360px;
+}
+.panel-title {
+  margin: 0;
+  font-size: clamp(28px, 2.9vw, 46px);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.02;
+}
+.panel-summary {
+  margin: 1.1em 0 0;
+  font-size: 14px;
+  line-height: 1.4;
+}
+.panel-description {
+  margin: 2.2em 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-dim);
+}
+.panel-tags {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 1.6em;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 11px;
+  border-radius: 999px;
+  background: var(--chip);
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.panel-arrow,
+.panel-close {
+  display: inline-grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--ink);
+  color: #fff;
+  transition: transform 0.4s var(--ease-out);
+}
+.panel-arrow {
+  width: 24px;
+  height: 24px;
+}
+.panel-arrow svg,
+.panel-close svg {
+  width: 60%;
+  height: 60%;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+.panel-arrow:hover {
+  transform: rotate(45deg);
+}
+.panel-close {
+  position: absolute;
+  z-index: 2;
+  top: clamp(16px, 2.2vw, 30px);
+  right: clamp(16px, 2.2vw, 30px);
+  width: 40px;
+  height: 40px;
+}
+.panel-close:hover {
+  transform: rotate(90deg);
+}
+.panel-meta {
+  margin-top: 2em;
+}
+.panel-meta h3 {
+  margin: 0 0 0.8em;
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+.panel-meta ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.panel-meta a {
+  text-decoration: none;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+}
+.panel-meta a:hover {
+  border-color: currentColor;
+}
+.panel-counter {
+  margin: 3em 0 0;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--ink-dim);
+}
+.panel-gallery {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(20px, 3vw, 40px);
+  padding-bottom: 20vh;
+}
+.panel-figure {
+  margin: 0;
+  aspect-ratio: 1280 / 752;
+  overflow: hidden;
+  border-radius: 4px;
+  background: #f1f0ec;
+}
+.panel-figure img,
+.panel-figure video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+@media (max-width: 760px) {
+  .profile-highlight {
+    margin-top: 1em;
+  }
+  .profile-links {
+    margin-top: 1em;
+    gap: 8px;
+  }
+  .panel-scroll {
+    grid-template-columns: 1fr;
+    padding: 22px 18px 18px;
+    gap: 28px;
+  }
+  .panel-info {
+    position: static;
+    padding-right: 48px;
+  }
+  .panel-close {
+    top: 14px;
+    right: 14px;
+    width: 36px;
+    height: 36px;
+  }
+  .panel-counter {
+    display: none;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.15s !important;
+  }
+  .loader-dash {
+    transform: scaleX(1);
+  }
+}
