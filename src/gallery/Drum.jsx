@@ -196,7 +196,9 @@ export function Drum({ slots, textures, layout, phase, activeSlot, reducedMotion
     // Everything springs back to rest.
     const v = reducedMotion ? 0 : nav.velocity * settle
     const w = wave.current
-    springStep(w.energy, THREE.MathUtils.clamp((Math.abs(v) - 0.9) / 3.6, 0, 1), dt, 18, 6.5)
+    // Normal scrolling (~2–3 cards/s in the reference) leaves the wave calm; it only
+    // swells on real flings (~5+ cards/s).
+    springStep(w.energy, THREE.MathUtils.clamp((Math.abs(v) - 2.5) / 3, 0, 1), dt, 18, 6.5)
     springStep(w.lean, THREE.MathUtils.clamp(v / 4, -1, 1), dt, 18, 6.5)
     // Measured from the reference at full speed: the crest only comes ~20% closer
     // (card ~53% → ~68% of the screen height) while the trailing strip sinks back to
@@ -205,7 +207,7 @@ export function Drum({ slots, textures, layout, phase, activeSlot, reducedMotion
     const H = layout.cardH
     curve.update({
       depth: layout.waveDepth + 1.0 * H * e,
-      amp: layout.waveAmp + 1.3 * H * e,
+      amp: layout.waveAmp + 1.2 * H * e,
       length: layout.waveLength,
       phase: layout.wavePhase + w.lean.x * H * 0.8,
     })
