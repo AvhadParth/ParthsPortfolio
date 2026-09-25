@@ -23,7 +23,9 @@ export function useGalleryControls(stageRef, { enabled, slotWidthPx, onActivate,
       if (nav.locked) return
       const unit = e.deltaMode === 1 ? 33 : e.deltaMode === 2 ? window.innerHeight : 1
       const delta = (Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY) * unit
-      nav.target += Math.max(-120, Math.min(120, delta)) / (slotWidthPx() * 0.9)
+      // Cap each event so fast wheels/trackpads glide instead of racing (matches the
+      // reference: a fast burst moves ~1.3 cards, not 3).
+      nav.target += Math.max(-48, Math.min(48, delta)) / (slotWidthPx() * 0.9)
       snapSoon()
     }
 

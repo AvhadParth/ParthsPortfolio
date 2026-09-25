@@ -190,19 +190,18 @@ export function Drum({ slots, textures, layout, phase, activeSlot, reducedMotion
 
     const settle = nav.locked ? 0 : 1
 
-    // Slow scrolling keeps the resting wave. Fast moves bring it alive: the crest swells
-    // towards the viewer, the rest of the strip sweeps far back into a long, thin
-    // ribbon that twists along its length, and the crest travels against the motion.
-    // Everything springs back to rest.
+    // The resting wave holds while scrolling. Dragging fast lets it swell a little: the
+    // crest eases towards the viewer, the strip beside it sinks back and twists slightly,
+    // and everything springs back to rest on release.
     const v = reducedMotion ? 0 : nav.velocity * settle
     const w = wave.current
-    // Normal scrolling (~2–3 cards/s in the reference) leaves the wave calm; it only
-    // swells on real flings (~5+ cards/s).
-    springStep(w.energy, THREE.MathUtils.clamp((Math.abs(v) - 2.5) / 3, 0, 1), dt, 18, 6.5)
-    springStep(w.lean, THREE.MathUtils.clamp(v / 4, -1, 1), dt, 18, 6.5)
-    // Measured from the reference at full speed: the crest only comes ~20% closer
-    // (card ~53% → ~68% of the screen height) while the trailing strip sinks back to
-    // ~4× the resting depth. The wave keeps its length. Energy never overshoots past 1.
+    // Wheel/trackpad scrolling keeps the resting wave exactly (as on the reference).
+    // Only dragging the strip lets it swell, and gently.
+    const dragSwell = nav.dragging ? THREE.MathUtils.clamp((Math.abs(v) - 2) / 4, 0, 0.45) : 0
+    springStep(w.energy, dragSwell, dt, 18, 6.5)
+    springStep(w.lean, nav.dragging ? THREE.MathUtils.clamp(v / 4, -1, 1) * 0.5 : 0, dt, 18, 6.5)
+    // At the drag cap (0.45) the focused card grows from ~53% to ~57% of the screen
+    // height while the strip beside it sinks back. The wave keeps its length.
     const e = THREE.MathUtils.clamp(w.energy.x, 0, 1)
     const H = layout.cardH
     curve.update({
