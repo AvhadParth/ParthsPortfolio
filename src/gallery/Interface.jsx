@@ -6,7 +6,8 @@ export function CornerNav({ view, canUse3D, profileOpen, hidden, onHome, onToggl
   return (
     <nav className={`corners${hidden ? ' is-hidden' : ''}`} aria-label="Site">
       <button className="corner corner-tl" onClick={onHome}>
-        {profile.name}
+        <img className="corner-mark" src="/icon.svg" alt="" width="28" height="28" />
+        <span>{profile.name}</span>
       </button>
       <p className="tagline">{profile.tagline}</p>
       <button className="corner corner-tr" onClick={onToggleProfile} aria-expanded={profileOpen}>

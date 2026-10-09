@@ -120,18 +120,33 @@ html[data-dragging='true'] .view-featured .stage canvas {
 .corner {
   position: fixed;
   z-index: 30;
-  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px; /* comfortable click/tap target */
+  font-size: 13px;
   font-weight: 600;
-  letter-spacing: 0.01em;
+  letter-spacing: 0.04em;
   line-height: 1;
   text-transform: uppercase;
   text-decoration: none;
   color: var(--fg);
   transition: opacity 0.5s var(--ease-out);
 }
+/* The name is the one thing to remember: a wordmark with the PA monogram. */
 .corner-tl {
   top: var(--corner-y);
   left: var(--corner-x);
+  gap: 10px;
+  font-size: clamp(17px, 1.45vw, 22px);
+  font-weight: 500;
+  letter-spacing: -0.015em;
+  text-transform: none;
+}
+.corner-mark {
+  width: 1.4em;
+  height: 1.4em;
+  border-radius: 0.32em;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.14);
 }
 .corner-tr {
   top: var(--corner-y);
@@ -141,7 +156,7 @@ html[data-dragging='true'] .view-featured .stage canvas {
   bottom: var(--corner-y);
   left: var(--corner-x);
   display: flex;
-  gap: 6px;
+  gap: 8px;
 }
 .corner-br {
   bottom: var(--corner-y);
@@ -165,12 +180,12 @@ html[data-dragging='true'] .view-featured .stage canvas {
 .tagline {
   position: fixed;
   z-index: 30;
-  top: var(--corner-y);
+  top: calc(var(--corner-y) + 7px);
   left: 50%;
   translate: -50% 0;
   margin: 0;
-  max-width: min(64ch, 52vw);
-  font-size: 13px;
+  max-width: min(64ch, 46vw);
+  font-size: 14px;
   line-height: 1.35;
   text-align: center;
   color: var(--fg-dim);
@@ -182,9 +197,9 @@ html[data-dragging='true'] .view-featured .stage canvas {
 }
 @media (max-width: 760px) {
   .tagline {
-    top: calc(var(--corner-y) + 26px);
+    top: calc(var(--corner-y) + 44px);
     max-width: calc(100vw - 2 * var(--corner-x));
-    font-size: 12px;
+    font-size: 13px;
   }
 }
 .corners.is-hidden .corner {
