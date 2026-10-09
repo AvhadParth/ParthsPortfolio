@@ -5,6 +5,7 @@ import { nav, nearestPositionFor, wrapIndex } from './gallery/navStore'
 import { composeLabel, composeMedia, ensureFonts } from './gallery/textures'
 import { useGalleryControls } from './gallery/useGalleryControls'
 import { ProjectPanel } from './gallery/ProjectPanel'
+import { AboutPanel } from './gallery/AboutPanel'
 import { ProjectIndex } from './gallery/ProjectIndex'
 import { CornerNav, Loader, ProfileOverlay } from './gallery/Interface'
 
@@ -52,6 +53,7 @@ export default function App() {
   const [standalone, setStandalone] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
   const [ringMounted, setRingMounted] = useState(false)
+  const [aboutOpen, setAboutOpen] = useState(false)
 
   const stageRef = useRef()
   const lastFocus = useRef(null)
@@ -162,6 +164,16 @@ export default function App() {
 
   const onRingHidden = useCallback(() => setRingMounted(false), [])
 
+  const openAbout = useCallback(() => {
+    lastFocus.current = document.querySelector('.corner-tr')
+    setProfileOpen(false)
+    setAboutOpen(true)
+  }, [])
+  const closeAbout = useCallback(() => {
+    setAboutOpen(false)
+    restoreFocus()
+  }, [])
+
   // Escape closes the profile.
   useEffect(() => {
     if (!profileOpen) return
@@ -177,7 +189,7 @@ export default function App() {
 
   const featured = view === 'featured' && canUse3D
   useGalleryControls(stageRef, {
-    enabled: featured && ready && phase === 'gallery',
+    enabled: featured && ready && phase === 'gallery' && !aboutOpen,
     slotWidthPx,
     onActivate: openCentered,
     onTap,
@@ -255,13 +267,13 @@ export default function App() {
 
       {view === 'full' && ready && <ProjectIndex projects={projects} onOpen={openFromIndex} reducedMotion={reducedMotion} />}
 
-      <ProfileOverlay open={profileOpen} ringSize={canUse3D ? ringHole : Math.min(viewport.w * 0.86, 560)} />
+      <ProfileOverlay open={profileOpen} ringSize={canUse3D ? ringHole : Math.min(viewport.w * 0.86, 560)} onAbout={openAbout} />
 
       <CornerNav
         view={view}
         canUse3D={canUse3D}
         profileOpen={profileOpen}
-        hidden={!ready || phase !== 'gallery'}
+        hidden={!ready || phase !== 'gallery' || aboutOpen}
         onHome={goHome}
         onToggleProfile={toggleProfile}
         onSetView={(v) => {
@@ -283,6 +295,8 @@ export default function App() {
           onClose={onPanelClose}
         />
       )}
+
+      {aboutOpen && <AboutPanel reducedMotion={reducedMotion} onClose={closeAbout} />}
 
       <Loader done={ready} onGone={onLoaderGone} />
     </div>

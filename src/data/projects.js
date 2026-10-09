@@ -25,6 +25,8 @@ export const profile = {
   name: 'Parth Avhad',
   role: 'Creative Developer',
   location: 'Mumbai, India',
+  // One line shown on the landing view, so visitors know who this is straight away.
+  tagline: 'Creative developer in Mumbai, building immersive websites and e-commerce.',
   bio: 'Parth Avhad is a creative developer and Information Technology engineer based in Mumbai, building immersive, motion-driven websites and data-informed products — from 3D e-commerce experiences to applied AI research.',
   highlights: 'B.E. Information Technology · Mumbai',
   email: 'avhadparth04@gmail.com',
@@ -33,6 +35,58 @@ export const profile = {
     { label: 'GitHub', href: 'https://github.com/AvhadParth' },
     { label: 'LinkedIn', href: 'https://linkedin.com/in/parthavhad/' },
     { label: 'Email', href: 'mailto:avhadparth04@gmail.com' },
+  ],
+  // Most recent first.
+  experience: [
+    {
+      role: 'Data Analyst Intern',
+      company: 'MuSo (Museum of Solutions), a JSW initiative',
+      location: 'Worli, Mumbai',
+      period: 'Apr 2026 – Present',
+      details: [
+        'Analysing operational and visitor data to support strategic decisions.',
+        'Building executive dashboards in Python to track key performance metrics.',
+        'Developing ETL pipelines that keep the data accurate and reliable.',
+      ],
+    },
+    {
+      role: 'WordPress Developer Intern',
+      company: 'DigiFalx',
+      location: 'Sanpada, Navi Mumbai',
+      period: 'Feb 2025 – Jan 2026',
+      details: [
+        'Customised client themes and plugins with cross-browser compatibility.',
+        'Optimised performance and SEO, cutting average page load by 30%.',
+        'Delivered responsive, accessible web experiences.',
+      ],
+    },
+    {
+      role: 'Business Analyst Intern',
+      company: 'Hatmedia',
+      location: 'Andheri, Mumbai',
+      period: 'Mar 2024 – Dec 2024',
+      details: ['Helped project managers plan and run technical projects.', 'Monitored project budgets and prepared financial reports.'],
+    },
+  ],
+  education: [
+    {
+      degree: 'B.E. Information Technology',
+      institution: 'Shah and Anchor Kutchhi Engineering College, Chembur',
+      period: 'Aug 2023 – Present',
+      note: 'Final year · CGPA 9.12 / 10',
+    },
+    {
+      degree: 'Higher Secondary (Science)',
+      institution: 'B.N.B College of Science, Thane',
+      period: 'Aug 2021 – May 2023',
+      note: '80%',
+    },
+  ],
+  skills: [
+    { group: 'Languages', items: ['JavaScript', 'Python', 'Java', 'C / C++', 'SQL (PostgreSQL)', 'HTML / CSS'] },
+    { group: 'Frameworks', items: ['React', 'Three.js', 'GSAP', 'Node.js / Express', 'FastAPI', 'Flask', 'WordPress'] },
+    { group: 'Tools', items: ['Git & GitHub', 'Docker', 'Google Cloud Platform', 'Figma'] },
+    { group: 'Data', items: ['Tableau', 'Power BI', 'Excel', 'R'] },
   ],
 }
 

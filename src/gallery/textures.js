@@ -6,7 +6,8 @@ import { CARD_ASPECT } from './config'
 const CARD_W = 1280
 const CARD_H = Math.round(CARD_W / CARD_ASPECT)
 const UI_FONT = '"Inter Tight", "Helvetica Neue", Arial, sans-serif'
-const DISPLAY_FONT = '"Instrument Serif", Georgia, serif'
+// Placeholder posters only appear if a project has no image; a system serif is enough.
+const DISPLAY_FONT = 'Georgia, "Times New Roman", serif'
 
 export function loadImage(src) {
   return new Promise((resolve, reject) => {
@@ -24,8 +25,6 @@ export async function ensureFonts() {
     await Promise.all([
       document.fonts.load(`400 40px ${UI_FONT}`),
       document.fonts.load(`500 40px ${UI_FONT}`),
-      document.fonts.load(`italic 400 120px ${DISPLAY_FONT}`),
-      document.fonts.load(`400 120px ${DISPLAY_FONT}`),
     ])
   } catch {
     // Fall back to system fonts silently.

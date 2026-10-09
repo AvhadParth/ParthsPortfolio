@@ -52,12 +52,14 @@ function Scene({ cardCanvases, ...props }) {
       const canvases = cardCanvases.get(project.id)
       const entry = { media: canvasTexture(canvases.media), label: canvasTexture(canvases.label), video: null, videoTexture: null }
       if (project.video) {
+        // No src yet: the file only starts downloading once its card comes near the
+        // screen (see Drum), so five videos don't all load with the page.
         const video = document.createElement('video')
-        video.src = project.video
+        video.dataset.src = project.video
         video.muted = true
         video.loop = true
         video.playsInline = true
-        video.preload = 'auto'
+        video.preload = 'metadata'
         video.setAttribute('aria-hidden', 'true')
         entry.video = video
         entry.videoTexture = new THREE.VideoTexture(video)

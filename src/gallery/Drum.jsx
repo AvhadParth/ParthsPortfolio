@@ -237,13 +237,23 @@ export function Drum({ slots, textures, layout, phase, activeSlot, reducedMotion
     // the poster until their video has a frame ready.
     playing.current.clear()
     slots.forEach((slot, i) => {
-      const near = Math.abs(slotS.current[i]) < layout.pitch * 2.6 && materials[i].uniforms.uDim.value < 0.99
+      // The focused card and one either side: what's actually on screen. Outer cards
+      // keep their posters until scrolled to, so the page doesn't load every video.
+      const near = Math.abs(slotS.current[i]) < layout.pitch * 1.5 && materials[i].uniforms.uDim.value < 0.99
       if (near) playing.current.add(slot.project.id)
     })
     textures.forEach((entry, id) => {
       const video = entry.video
       if (!video) return
-      const shouldPlay = !reducedMotion && playing.current.has(id)
+      const near = playing.current.has(id)
+      // Attach the source the first time the card comes near once the strip has arrived
+      // where it's heading, so cards that only fly past (intro glide, fast scrolls)
+      // don't download.
+      if (near && Math.abs(nav.target - nav.current) < 0.15 && !video.src && video.dataset.src) {
+        video.src = video.dataset.src
+        video.preload = reducedMotion ? 'metadata' : 'auto'
+      }
+      const shouldPlay = !reducedMotion && near
       if (shouldPlay && video.paused) video.play().catch(() => {})
       else if (!shouldPlay && !video.paused) video.pause()
     })

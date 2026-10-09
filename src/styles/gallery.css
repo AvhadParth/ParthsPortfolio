@@ -162,6 +162,31 @@ html[data-dragging='true'] .view-featured .stage canvas {
 .corner:is(a, button):hover {
   opacity: 0.6;
 }
+.tagline {
+  position: fixed;
+  z-index: 30;
+  top: var(--corner-y);
+  left: 50%;
+  translate: -50% 0;
+  margin: 0;
+  max-width: min(64ch, 52vw);
+  font-size: 13px;
+  line-height: 1.35;
+  text-align: center;
+  color: var(--fg-dim);
+  transition: opacity 0.5s var(--ease-out);
+}
+.is-profile .tagline,
+.corners.is-hidden .tagline {
+  opacity: 0;
+}
+@media (max-width: 760px) {
+  .tagline {
+    top: calc(var(--corner-y) + 26px);
+    max-width: calc(100vw - 2 * var(--corner-x));
+    font-size: 12px;
+  }
+}
 .corners.is-hidden .corner {
   opacity: 0;
   pointer-events: none;
@@ -332,6 +357,19 @@ html[data-dragging='true'] .view-featured .stage canvas {
 }
 .profile-links a:hover {
   opacity: 0.6;
+}
+.profile-more {
+  margin-top: 1.8em;
+  padding: 9px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 999px;
+  font-size: 12px;
+  transition: background-color 0.3s, color 0.3s;
+}
+.profile-more:hover,
+.profile-more:focus-visible {
+  background: var(--fg);
+  color: #000;
 }
 
 /* ---------- Index ("Full" view / 2D fallback) ---------- */
@@ -571,6 +609,120 @@ html[data-dragging='true'] .view-featured .stage canvas {
   gap: clamp(20px, 3vw, 40px);
   padding-bottom: 20vh;
 }
+/* About view */
+.about-role {
+  margin: 0.5em 0 0;
+  font-size: 14px;
+  color: var(--ink-dim);
+}
+.about-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 1.8em 0 0;
+  padding: 0;
+  list-style: none;
+}
+.about-links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: var(--chip);
+  font-size: 13px;
+  text-decoration: none;
+  transition: background-color 0.3s;
+}
+.about-links a:hover {
+  background: #e2e2de;
+}
+.about-links .about-resume {
+  background: var(--ink);
+  color: #fff;
+}
+.about-links .about-resume:hover {
+  background: #2a2a2a;
+}
+.about-body {
+  display: grid;
+  gap: clamp(36px, 5vw, 64px);
+  padding-bottom: 12vh;
+  max-width: 680px;
+}
+.about-section h3 {
+  margin: 0 0 1.1em;
+  font-size: clamp(20px, 1.8vw, 26px);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+.about-timeline {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+.about-timeline > li {
+  display: grid;
+  grid-template-columns: minmax(120px, 0.32fr) 1fr;
+  gap: 8px 24px;
+  padding: 18px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+.about-period {
+  margin: 0.15em 0 0;
+  font-size: 13px;
+  color: var(--ink-dim);
+  font-variant-numeric: tabular-nums;
+}
+.about-heading {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+}
+.about-sub,
+.about-note {
+  margin: 0.25em 0 0;
+  font-size: 13px;
+  color: var(--ink-dim);
+}
+.about-details {
+  margin: 0.8em 0 0;
+  padding-left: 1.1em;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.about-details li + li {
+  margin-top: 0.3em;
+}
+.about-skills {
+  margin: 0;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+.about-skills > div {
+  display: grid;
+  grid-template-columns: minmax(120px, 0.32fr) 1fr;
+  gap: 24px;
+  padding: 14px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  font-size: 14px;
+}
+.about-skills dt {
+  color: var(--ink-dim);
+  font-size: 13px;
+}
+.about-skills dd {
+  margin: 0;
+  line-height: 1.5;
+}
+@media (max-width: 560px) {
+  .about-timeline > li,
+  .about-skills > div {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+}
+
 .panel-figure {
   margin: 0;
   aspect-ratio: 1280 / 752;
@@ -587,8 +739,19 @@ html[data-dragging='true'] .view-featured .stage canvas {
 }
 
 @media (max-width: 760px) {
+  /* The ring's hole is small on phones: keep only the bio, links and About button
+     (the degree line is in the About panel). */
   .profile-highlight {
+    display: none;
+  }
+  .profile-bio {
+    font-size: 11px;
+    line-height: 1.38;
+  }
+  .profile-more {
     margin-top: 1em;
+    padding: 7px 12px;
+    font-size: 11px;
   }
   .profile-links {
     margin-top: 1em;

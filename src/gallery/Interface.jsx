@@ -8,6 +8,7 @@ export function CornerNav({ view, canUse3D, profileOpen, hidden, onHome, onToggl
       <button className="corner corner-tl" onClick={onHome}>
         {profile.name}
       </button>
+      <p className="tagline">{profile.tagline}</p>
       <button className="corner corner-tr" onClick={onToggleProfile} aria-expanded={profileOpen}>
         {profileOpen ? 'Close' : 'Profile'}
       </button>
@@ -53,7 +54,7 @@ export function Loader({ done, onGone }) {
   )
 }
 
-export function ProfileOverlay({ open, ringSize }) {
+export function ProfileOverlay({ open, ringSize, onAbout }) {
   const ref = useRef()
   useEffect(() => {
     if (open) ref.current?.focus({ preventScroll: true })
@@ -86,6 +87,9 @@ export function ProfileOverlay({ open, ringSize }) {
             </a>
           </li>
         </ul>
+        <button className="profile-more" onClick={onAbout} tabIndex={open ? 0 : -1}>
+          Experience and skills
+        </button>
       </div>
     </section>
   )
