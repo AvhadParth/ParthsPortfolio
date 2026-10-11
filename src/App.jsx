@@ -66,6 +66,14 @@ export default function App() {
   const [profileOpen, setProfileOpen] = useState(false)
   const [ringMounted, setRingMounted] = useState(false)
   const [aboutOpen, setAboutOpen] = useState(false)
+  // Keeps the 3D gallery drawn for a moment after switching to FULL, so the list's
+  // opening circle has something to open over.
+  const [lingering, setLingering] = useState(false)
+  useEffect(() => {
+    if (!lingering) return
+    const t = setTimeout(() => setLingering(false), 800)
+    return () => clearTimeout(t)
+  }, [lingering])
 
   const stageRef = useRef()
   const lastFocus = useRef(null)
@@ -285,7 +293,7 @@ export default function App() {
             <Suspense fallback={null}>
             <GalleryCanvas
               slots={slots}
-              active={featured}
+              active={featured || lingering}
               cardCanvases={cardCanvases}
               phase={phase}
               activeSlot={activeSlot}
@@ -335,6 +343,7 @@ export default function App() {
           if (v === view) return
           setProfileOpen(false)
           setRingMounted(false)
+          setLingering(v === 'full' && canUse3D && !reducedMotion)
           setView(v)
         }}
       />

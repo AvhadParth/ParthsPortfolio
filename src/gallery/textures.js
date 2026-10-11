@@ -134,8 +134,20 @@ export function composeLabel(project) {
   ctx.fillStyle = '#fff'
   ctx.textAlign = 'left'
   ctx.textBaseline = 'alphabetic'
+  // Title, with a faint one-line description beneath it.
+  const noteSize = Math.round(CARD_H * 0.027)
   ctx.font = `500 ${Math.round(CARD_H * 0.05)}px ${UI_FONT}`
-  ctx.fillText(project.title, pad, CARD_H - pad * 0.95)
+  ctx.fillText(project.title, pad, CARD_H - pad * 0.95 - noteSize * 1.5)
+  ctx.font = `400 ${noteSize}px ${UI_FONT}`
+  ctx.fillStyle = 'rgba(255,255,255,0.62)'
+  const maxNote = CARD_W - pad * 2 - CARD_H * 0.09
+  let note = project.summary
+  if (ctx.measureText(note).width > maxNote) {
+    while (note.length > 4 && ctx.measureText(`${note}…`).width > maxNote) note = note.slice(0, -1)
+    note = `${note.trimEnd()}…`
+  }
+  ctx.fillText(note, pad, CARD_H - pad * 0.95)
+  ctx.fillStyle = '#fff'
 
   const r = CARD_H * 0.03
   const cx = CARD_W - pad - r

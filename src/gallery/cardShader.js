@@ -3,7 +3,7 @@ import * as THREE from 'three'
 // Geometry: a flat, finely subdivided card. The vertex shader lays it along the wave
 // curve (see curve.js); `aFlat` keeps the flat coordinates for the panel morph.
 export function createCardGeometry(width, height) {
-  const geometry = new THREE.PlaneGeometry(width, height, 72, 12)
+  const geometry = new THREE.PlaneGeometry(width, height, 72, 28)
   const pos = geometry.attributes.position
   const flat = new Float32Array(pos.count * 2)
   for (let i = 0; i < pos.count; i++) {
@@ -40,6 +40,10 @@ export function createCardUniforms(media, label, cardAspect, curve) {
     uHoleWobble: { value: 0 },
     uTime: { value: 0 },
     uPanelCorner: { value: 0.03 },
+    // Pointer "flow": three soft dents that trail the mouse across the strip.
+    // Each is (position along the strip, position across it, strength 0..1).
+    uDents: { value: [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()] },
+    uDentRadius: { value: 0.6 },
     uVideo: { value: 0 }, // 1 while uMap is a video (needs manual sRGB decoding)
     uVertical: { value: 0 }, // 1 = strip runs top-to-bottom (portrait screens)
     uIntro: { value: 1 }, // 0 → 1: cards grow out of the loader
@@ -68,9 +72,12 @@ export const cardVertexShader = /* glsl */ `
   uniform float uVertical;
   uniform float uIntro;
   uniform vec3 uIntroOrigin;
+  uniform vec3 uDents[3];
+  uniform float uDentRadius;
   varying vec2 vUv;
   varying vec2 vFlat;
   varying float vShade;
+  varying float vDent;
 
   // Curve lookup with manual linear interpolation (float textures aren't filterable everywhere).
   vec4 curveAt(float s) {
@@ -100,13 +107,28 @@ export const cardVertexShader = /* glsl */ `
     float theta = uTwist * sin(clamp(s * 0.22, -1.5, 1.5)) * abs(sin(clamp(s * 0.22, -1.5, 1.5)));
     vec3 p = base + side * cos(theta) * across + normal * sin(theta) * across;
 
+    // Pointer flow: each dent presses the surface away from the viewer and gathers it
+    // slightly towards its centre, like a finger dragged across cloth.
+    float press = 0.0;
+    vec2 gather = vec2(0.0);
+    for (int i = 0; i < 3; i++) {
+      vec2 to = uDents[i].xy - vec2(s, across);
+      float fall = exp(-dot(to, to) / (uDentRadius * uDentRadius)) * uDents[i].z;
+      press += fall;
+      gather += to * fall;
+    }
+    press = min(press, 1.4);
+    vec3 alongDir = mix(vec3(c.z, 0.0, c.w), vec3(0.0, -c.z, c.w), uVertical);
+    p += -normal * press * 0.34 + alongDir * gather.x * 0.22 + side * gather.y * 0.22;
+    vDent = press;
+
     // Intro: every card starts tiny at the loader and grows into place.
     p = mix(uIntroOrigin + (p - uIntroOrigin) * 0.04, p, uIntro);
 
     // Hover lifts the card towards the viewer. The wave itself carries most of the motion;
     // cards only add a faint paper flex on top.
     float arch = sin(uv.x * PI);
-    p += normal * (uHover * 0.06 + arch * abs(v) * 0.015);
+    p += normal * arch * abs(v) * 0.015;
     p.y += (uv.x - 0.5) * v * 0.012;
 
     // Morph into the flat panel rectangle in front of the camera.
@@ -145,6 +167,7 @@ export const cardFragmentShader = /* glsl */ `
   varying vec2 vUv;
   varying vec2 vFlat;
   varying float vShade;
+  varying float vDent;
 
   float roundedBox(vec2 uv, float aspect, float r) {
     vec2 p = (uv - 0.5) * vec2(aspect, 1.0);
@@ -179,8 +202,8 @@ export const cardFragmentShader = /* glsl */ `
     color = mix(vec3(1.0), color, inSlot);
     // Backs of the cards (seen when the ribbon twists) are near-black with a soft sheen.
     if (!gl_FrontFacing) color = vec3(0.012 + 0.02 * vUv.y);
-    color *= 1.0 + uHover * 0.06;
-    color *= mix(vShade, 1.0, uOpen);
+    // The pressed-in part of a dent sits in shadow.
+    color *= mix(vShade * (1.0 - 0.38 * smoothstep(0.0, 1.2, vDent)), 1.0, uOpen);
 
     float luma = dot(color, vec3(0.2126, 0.7152, 0.0722));
     color = mix(color, vec3(0.07 + luma * 0.1), uDim);

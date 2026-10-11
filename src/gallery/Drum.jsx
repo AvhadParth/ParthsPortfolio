@@ -61,7 +61,9 @@ export function Drum({ slots, textures, layout, phase, activeSlot, reducedMotion
   const returnTo = useRef(0)
   const hovered = useRef(-1)
   const spread = useRef({ value: 0 })
-  const parallax = useRef({ x: 0, y: 0 })
+  // Pointer flow: where the mouse meets the strip, and three dents that trail it at
+  // different speeds so the surface seems to drag behind the cursor.
+  const flow = useRef({ s: 0, a: 0, has: false, strength: 0, dents: [0, 1, 2].map(() => ({ s: 0, a: 0 })) })
   const slotS = useRef(new Float32Array(slots.length))
   const playing = useRef(new Set())
   // Live wave: `energy` deepens it with speed, `lean` slides the crest with direction.
@@ -99,7 +101,8 @@ export function Drum({ slots, textures, layout, phase, activeSlot, reducedMotion
     const raycaster = new THREE.Raycaster()
     const ndc = new THREE.Vector2()
     const probe = new THREE.Ray()
-    nav.pick = (clientX, clientY) => {
+    // Where a screen point meets the strip: { s: along it, y: across it }, or null.
+    nav.hit = (clientX, clientY) => {
       ndc.set((clientX / window.innerWidth) * 2 - 1, -(clientY / window.innerHeight) * 2 + 1)
       raycaster.setFromCamera(ndc, camera)
       const ray = raycaster.ray
@@ -112,7 +115,10 @@ export function Drum({ slots, textures, layout, phase, activeSlot, reducedMotion
         probe.origin.set(ray.origin.x, ray.origin.y - layout.cardsY, ray.origin.z)
         probe.direction.copy(ray.direction)
       }
-      const hit = curve.intersect(probe)
+      return curve.intersect(probe)
+    }
+    nav.pick = (clientX, clientY) => {
+      const hit = nav.hit(clientX, clientY)
       const across = layout.vertical ? layout.cardW : layout.cardH
       if (!hit || Math.abs(hit.y) > across / 2) return -1
       const s = slotS.current
@@ -121,6 +127,7 @@ export function Drum({ slots, textures, layout, phase, activeSlot, reducedMotion
     }
     return () => {
       nav.pick = null
+      nav.hit = null
     }
   }, [camera, curve, layout.cardH, layout.cardW, layout.cardsY, layout.along, layout.vertical])
 
@@ -231,6 +238,27 @@ export function Drum({ slots, textures, layout, phase, activeSlot, reducedMotion
     })
     const twist = e * THREE.MathUtils.clamp(w.lean.x * 1.6, -1, 1) * 1.1
 
+    // Pointer flow. Strength follows how fast the pointer travels across the strip and
+    // fades over about a second once it stops; nothing while dragging or with a
+    // project open.
+    const f = flow.current
+    const active = !reducedMotion && !nav.locked && !nav.dragging && nav.pointerInside && nav.hit
+    const hit = active ? nav.hit(nav.pointerClient.x, nav.pointerClient.y) : null
+    let drive = 0
+    if (hit) {
+      if (f.has) drive = THREE.MathUtils.clamp(Math.hypot(hit.s - f.s, hit.y - f.a) / Math.max(dt, 1e-3) / 7, 0, 1)
+      else f.dents.forEach((d) => ((d.s = hit.s), (d.a = hit.y)))
+      f.s = hit.s
+      f.a = hit.y
+    }
+    f.has = !!hit
+    f.strength = damp(f.strength, drive, drive > f.strength ? 9 : 2.4, dt)
+    const follow = [16, 7, 3.5]
+    f.dents.forEach((d, k) => {
+      d.s = damp(d.s, f.s, follow[k], dt)
+      d.a = damp(d.a, f.a, follow[k], dt)
+    })
+
     const spreadValue = spread.current.value
     const pushR = spreadValue > 0 ? spreadValue * solveNeighbourPush(curve, layout, size.width, size.height, 1) : 0
     const pushL = spreadValue > 0 ? spreadValue * solveNeighbourPush(curve, layout, size.width, size.height, -1) : 0
@@ -247,7 +275,9 @@ export function Drum({ slots, textures, layout, phase, activeSlot, reducedMotion
       u.uIntroOrigin.value.set(0, layout.cardsY, -centerDepth(layout))
       u.uVelocity.value = nav.velocity * settle
       u.uTwist.value = twist
-      u.uHover.value = damp(u.uHover.value, hovered.current === i && !nav.locked ? 1 : 0, 8, dt)
+      const weights = [1, 0.7, 0.45]
+      f.dents.forEach((d, k) => u.uDents.value[k].set(d.s, d.a, f.strength * weights[k]))
+      u.uDentRadius.value = layout.cardH * 0.34
       u.uHole.value = profileFx.reveal * profileFx.holeRadius
       u.uHoleWobble.value = profileFx.wobble
       u.uTime.value = state.clock.elapsedTime
@@ -300,15 +330,6 @@ export function Drum({ slots, textures, layout, phase, activeSlot, reducedMotion
       document.documentElement.dataset.cursor = next >= 0 ? 'pointer' : 'grab'
     }
 
-    // Subtle camera parallax from the pointer; neutral while a project is open
-    // so the morph lines up exactly with the DOM panel.
-    const cam = state.camera
-    const px = reducedMotion ? 0 : nav.pointer.x * settle
-    const py = reducedMotion ? 0 : nav.pointer.y * settle
-    parallax.current.x = damp(parallax.current.x, -px * 0.02, 3, dt)
-    parallax.current.y = damp(parallax.current.y, py * 0.015, 3, dt)
-    cam.rotation.y = parallax.current.x
-    cam.rotation.x = parallax.current.y
   })
 
   return (
