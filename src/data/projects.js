@@ -39,14 +39,25 @@ export const profile = {
   // Most recent first.
   experience: [
     {
+      role: 'Frontend Developer Intern',
+      company: 'DigiVeritaz',
+      location: 'Mumbai',
+      period: 'Aug 2026 – Present',
+      details: [
+        'Developing and maintaining responsive web interfaces using React.js, JavaScript, HTML and CSS.',
+        'Collaborating with designers and developers to implement user-focused interfaces and improve the overall user experience.',
+        'Working on frontend development, UI implementation, debugging and performance improvements across web projects.',
+      ],
+    },
+    {
       role: 'Data Analyst Intern',
       company: 'MuSo (Museum of Solutions), a JSW initiative',
       location: 'Worli, Mumbai',
-      period: 'Apr 2026 – Present',
+      period: 'Apr 2026 – Jul 2026',
       details: [
-        'Analysing operational and visitor data to support strategic decisions.',
-        'Building executive dashboards in Python to track key performance metrics.',
-        'Developing ETL pipelines that keep the data accurate and reliable.',
+        'Analysed operational and visitor data to support strategic decisions.',
+        'Built executive dashboards in Python to track key performance metrics.',
+        'Developed ETL pipelines that keep the data accurate and reliable.',
       ],
     },
     {

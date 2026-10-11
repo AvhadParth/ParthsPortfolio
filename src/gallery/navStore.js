@@ -7,6 +7,7 @@ export const nav = {
   velocity: 0, // smoothed slots/second, drives the bend + roll
   locked: false, // true while a project is opening/open/closing
   dragging: false,
+  fling: 0, // momentum after a drag is released, in slots/second; decays in the render loop
   pointer: { x: 0, y: 0 }, // normalised -1..1, for camera parallax
   pointerClient: { x: 0, y: 0 }, // CSS pixels, for hover picking
   pointerInside: false, // pointer is over the 3D stage

@@ -1,35 +1,30 @@
 import { useEffect } from 'react'
 import { nav } from './navStore'
 
+// The strip travels this many pixels for each pixel of wheel or drag input.
+const GAIN = 1.4
+// Largest wheel step taken from a single event, in pixels.
+const WHEEL_CAP = 68
+
 /**
- * Wheel / trackpad, pointer drag (mouse + touch) and keyboard navigation for the drum.
- * Everything writes to `nav.target`; the render loop eases towards it.
+ * Wheel / trackpad, pointer drag (mouse + touch) and keyboard navigation for the strip.
+ * Everything writes to `nav.target`; the render loop eases towards it. The strip rests
+ * wherever it lands (no snapping); a released drag carries on with momentum.
  */
 export function useGalleryControls(stageRef, { enabled, slotWidthPx, isVertical, onActivate, onTap }) {
   useEffect(() => {
     const stage = stageRef.current
     if (!stage || !enabled) return
 
-    let snapTimer = 0
-    const snapSoon = (delay = 160) => {
-      clearTimeout(snapTimer)
-      snapTimer = setTimeout(() => {
-        if (!nav.locked && !nav.dragging) nav.target = Math.round(nav.target)
-      }, delay)
-    }
-
     const onWheel = (e) => {
-      e.preventDefault()
       if (nav.locked) return
       const unit = e.deltaMode === 1 ? 33 : e.deltaMode === 2 ? window.innerHeight : 1
       const delta = (Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY) * unit
-      // Cap each event so fast wheels/trackpads glide instead of racing (matches the
-      // reference: a fast burst moves ~1.3 cards, not 3).
-      nav.target += Math.max(-48, Math.min(48, delta)) / (slotWidthPx() * 0.9)
-      snapSoon()
+      nav.fling = 0
+      nav.target += (Math.max(-WHEEL_CAP, Math.min(WHEEL_CAP, delta)) * GAIN) / slotWidthPx()
     }
 
-    // Drag with inertia.
+    // Drag, with momentum on release.
     let startX = 0
     let lastX = 0
     let lastT = 0
@@ -47,7 +42,7 @@ export function useGalleryControls(stageRef, { enabled, slotWidthPx, isVertical,
       lastT = performance.now()
       speed = 0
       nav.dragging = true
-      clearTimeout(snapTimer)
+      nav.fling = 0
       document.documentElement.dataset.dragging = 'true'
     }
     const onPointerMove = (e) => {
@@ -62,7 +57,7 @@ export function useGalleryControls(stageRef, { enabled, slotWidthPx, isVertical,
       speed = speed * 0.6 + (dx / Math.max(1, now - lastT)) * 0.4
       lastX = along(e)
       lastT = now
-      nav.target -= dx / slotWidthPx()
+      nav.target -= (dx * GAIN) / slotWidthPx()
     }
     const onPointerUp = (e) => {
       if (!nav.dragging || e.pointerId !== pointerId) return
@@ -70,8 +65,8 @@ export function useGalleryControls(stageRef, { enabled, slotWidthPx, isVertical,
       pointerId = null
       delete document.documentElement.dataset.dragging
       const moved = Math.abs(lastX - startX) > 6
-      if (moved && performance.now() - lastT < 80) nav.target -= (speed * 260) / slotWidthPx()
-      nav.target = Math.round(nav.target)
+      // Hand the release speed to the render loop as momentum (slots per second).
+      if (moved && performance.now() - lastT < 80) nav.fling = (-speed * 1000 * GAIN) / slotWidthPx()
       if (!moved) onTap(e.clientX, e.clientY)
     }
 
@@ -80,9 +75,11 @@ export function useGalleryControls(stageRef, { enabled, slotWidthPx, isVertical,
       if (e.target.closest?.('input, textarea, [contenteditable]')) return
       if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
         e.preventDefault()
+        nav.fling = 0
         nav.target = Math.round(nav.target) + 1
       } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
         e.preventDefault()
+        nav.fling = 0
         nav.target = Math.round(nav.target) - 1
       } else if (e.key === 'Enter' && (e.target === document.body || e.target === stage)) {
         e.preventDefault()
@@ -90,15 +87,17 @@ export function useGalleryControls(stageRef, { enabled, slotWidthPx, isVertical,
       }
     }
 
-    stage.addEventListener('wheel', onWheel, { passive: false })
+    // Passive: the page itself never scrolls (overflow hidden, overscroll-behavior none),
+    // so there is nothing to prevent and the browser needn't wait on this handler.
+    stage.addEventListener('wheel', onWheel, { passive: true })
     stage.addEventListener('pointerdown', onPointerDown)
     window.addEventListener('pointermove', onPointerMove)
     window.addEventListener('pointerup', onPointerUp)
     window.addEventListener('pointercancel', onPointerUp)
     window.addEventListener('keydown', onKeyDown)
     return () => {
-      clearTimeout(snapTimer)
       nav.dragging = false
+      nav.fling = 0
       stage.removeEventListener('wheel', onWheel)
       stage.removeEventListener('pointerdown', onPointerDown)
       window.removeEventListener('pointermove', onPointerMove)

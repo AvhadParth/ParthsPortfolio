@@ -102,9 +102,11 @@ export const cardVertexShader = /* glsl */ `
     vec3 side = mix(vec3(0.0, 1.0, 0.0), vec3(1.0, 0.0, 0.0), uVertical);
     vec3 base = mix(vec3(c.x, uCardsY, c.y), vec3(0.0, uCardsY - c.x, c.y), uVertical);
 
-    // Ribbon twist around the strip's own direction: none at the crest (s near 0),
-    // growing along the strip, so the far part turns into a thin twisting ribbon.
-    float theta = uTwist * sin(clamp(s * 0.22, -1.5, 1.5)) * abs(sin(clamp(s * 0.22, -1.5, 1.5)));
+    // Ribbon twist around the strip's own direction, on the incoming side only: none at
+    // the focused card, growing along the strip, so the cards arriving turn into a thin
+    // twisting ribbon while the ones leaving stay flat.
+    float ahead = clamp(s * sign(uTwist) * 0.22, 0.0, 1.5);
+    float theta = uTwist * sin(ahead) * sin(ahead);
     vec3 p = base + side * cos(theta) * across + normal * sin(theta) * across;
 
     // Pointer flow: each dent presses the surface away from the viewer and gathers it
