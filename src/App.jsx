@@ -10,6 +10,18 @@ import { ProjectIndex } from './gallery/ProjectIndex'
 import { CornerNav, Loader, ProfileOverlay } from './gallery/Interface'
 
 const MIN_LOADER_MS = 1100
+const HOME_TITLE = document.title
+
+// Each project has its own address (/projects/<id>), so it can be linked to directly
+// and the browser's Back button closes it.
+const projectPath = (project) => `/projects/${project.id}`
+const projectIndexFromPath = () => {
+  const match = window.location.pathname.match(/^\/projects\/([^/]+)\/?$/)
+  return match ? projects.findIndex((p) => p.id === match[1]) : -1
+}
+const setPath = (path) => {
+  if (window.location.pathname !== path) window.history.pushState(null, '', path)
+}
 
 // three.js is only downloaded when the 3D gallery is actually used.
 const GalleryCanvas = lazy(() => import('./gallery/GalleryCanvas').then((m) => ({ default: m.GalleryCanvas })))
@@ -87,9 +99,11 @@ export default function App() {
   // On-screen width of one card step near the focus, used to map drag pixels → slots.
   const slotWidthPx = useCallback(() => {
     const l = getLayout(slots.length, window.innerWidth, window.innerHeight)
-    const tanX = Math.tan((l.fov * Math.PI) / 360) * (window.innerWidth / window.innerHeight)
-    return (l.pitch / (2 * l.waveDepth * tanX)) * window.innerWidth
+    const tanY = Math.tan((l.fov * Math.PI) / 360)
+    if (l.vertical) return (l.pitch / (2 * l.waveDepth * tanY)) * window.innerHeight
+    return (l.pitch / (2 * l.waveDepth * tanY * (window.innerWidth / window.innerHeight))) * window.innerWidth
   }, [slots.length])
+  const isVertical = useCallback(() => getLayout(slots.length, window.innerWidth, window.innerHeight).vertical, [slots.length])
 
   const openSlot = useCallback(
     (slot) => {
@@ -100,6 +114,7 @@ export default function App() {
       setActiveSlot(slot)
       setActiveIndex(slots[slot].projectIndex)
       setPhase('opening')
+      setPath(projectPath(slots[slot].project))
     },
     [phase, slots],
   )
@@ -121,6 +136,7 @@ export default function App() {
       setStandalone(true)
       setActiveIndex(index)
       setPhase('project')
+      setPath(projectPath(projects[index]))
     },
     [phase],
   )
@@ -140,6 +156,7 @@ export default function App() {
   }, [])
 
   const onPanelClose = useCallback(() => {
+    setPath('/')
     if (standalone) {
       setPhase('gallery')
       setActiveIndex(null)
@@ -191,6 +208,7 @@ export default function App() {
   useGalleryControls(stageRef, {
     enabled: featured && ready && phase === 'gallery' && !aboutOpen,
     slotWidthPx,
+    isVertical,
     onActivate: openCentered,
     onTap,
   })
@@ -208,11 +226,48 @@ export default function App() {
   }
 
   const activeProject = activeIndex != null ? projects[activeIndex] : null
-  const showPanel = activeProject && phase === 'project'
+  // Mounted (hidden) while the card is still morphing, so the card knows where the
+  // panel's lead image will be; revealed the moment the morph lands.
+  const showPanel = activeProject && (phase === 'project' || phase === 'opening')
+
+  // Open a project by index from the gallery (nearest copy of its card) or the index.
+  const openProject = (index) => {
+    if (featured) {
+      const best = focusProject(index)
+      if (best) openSlot(best.slot)
+    } else openFromIndex(index)
+  }
+
+  // Address bar ↔ open project: Back/Forward, and landing directly on a project link.
+  const routeRef = useRef()
+  routeRef.current = () => {
+    const index = projectIndexFromPath()
+    if (index >= 0 && phase === 'gallery' && !aboutOpen) openProject(index)
+    else if (index < 0 && phase === 'project') {
+      if (standalone) {
+        setPhase('gallery')
+        setActiveIndex(null)
+        setStandalone(false)
+      } else setPhase('closing')
+    }
+  }
+  useEffect(() => {
+    const onPop = () => routeRef.current()
+    window.addEventListener('popstate', onPop)
+    return () => window.removeEventListener('popstate', onPop)
+  }, [])
+  useEffect(() => {
+    if (!introKey) return
+    const t = setTimeout(() => routeRef.current(), 900)
+    return () => clearTimeout(t)
+  }, [introKey])
+  useEffect(() => {
+    document.title = activeProject ? `${activeProject.title} — ${profile.name}` : HOME_TITLE
+  }, [activeProject])
   const ringHole = getRingHolePx(layout, viewport.w, viewport.h)
 
   return (
-    <div className={`app view-${view}${phase !== 'gallery' ? ' is-locked' : ''}${profileOpen ? ' is-profile' : ''}${canUse3D ? '' : ' no-3d'}${ringMounted ? ' is-ring' : ''}`}>
+    <div className={`app view-${view}${phase !== 'gallery' ? ' is-locked' : ''}${profileOpen ? ' is-profile' : ''}${canUse3D ? '' : ' no-3d'}${ringMounted ? ' is-ring' : ''}${layout.vertical ? ' is-vertical' : ''}`}>
       <h1 className="sr-only">
         {profile.name} — {profile.role}
       </h1>
@@ -291,6 +346,7 @@ export default function App() {
           index={activeIndex}
           total={projects.length}
           standalone={standalone || !featured}
+          pending={phase === 'opening'}
           reducedMotion={reducedMotion}
           onClose={onPanelClose}
         />

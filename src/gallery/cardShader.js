@@ -40,6 +40,13 @@ export function createCardUniforms(media, label, cardAspect, curve) {
     uHoleWobble: { value: 0 },
     uTime: { value: 0 },
     uPanelCorner: { value: 0.03 },
+    uVideo: { value: 0 }, // 1 while uMap is a video (needs manual sRGB decoding)
+    uVertical: { value: 0 }, // 1 = strip runs top-to-bottom (portrait screens)
+    uIntro: { value: 1 }, // 0 → 1: cards grow out of the loader
+    uIntroOrigin: { value: new THREE.Vector3() },
+    // Where the case study's lead image sits inside the panel (uv: x0, y0, x1, y1).
+    // While opening, the card's image travels into this slot as the panel turns white.
+    uHero: { value: new THREE.Vector4(0, 0, 1, 1) },
   }
 }
 
@@ -58,6 +65,9 @@ export const cardVertexShader = /* glsl */ `
   uniform float uRipple;
   uniform vec2 uFlatScale;
   uniform vec3 uFlatCenter;
+  uniform float uVertical;
+  uniform float uIntro;
+  uniform vec3 uIntroOrigin;
   varying vec2 vUv;
   varying vec2 vFlat;
   varying float vShade;
@@ -76,14 +86,22 @@ export const cardVertexShader = /* glsl */ `
     vFlat = aFlat;
     float v = clamp(uVelocity, -6.0, 6.0);
 
-    float s = uSlotS + aFlat.x;
+    // The strip runs left-to-right, or top-to-bottom on portrait screens.
+    float along = mix(aFlat.x, -aFlat.y, uVertical);
+    float across = mix(aFlat.y, aFlat.x, uVertical);
+    float s = uSlotS + along;
     vec4 c = curveAt(s);
-    vec3 normal = normalize(vec3(-c.w, 0.0, c.z)); // faces the camera
+    vec3 normal = normalize(mix(vec3(-c.w, 0.0, c.z), vec3(0.0, c.w, c.z), uVertical)); // faces the camera
+    vec3 side = mix(vec3(0.0, 1.0, 0.0), vec3(1.0, 0.0, 0.0), uVertical);
+    vec3 base = mix(vec3(c.x, uCardsY, c.y), vec3(0.0, uCardsY - c.x, c.y), uVertical);
 
     // Ribbon twist around the strip's own direction: none at the crest (s near 0),
     // growing along the strip, so the far part turns into a thin twisting ribbon.
     float theta = uTwist * sin(clamp(s * 0.22, -1.5, 1.5)) * abs(sin(clamp(s * 0.22, -1.5, 1.5)));
-    vec3 p = vec3(c.x, uCardsY, c.y) + vec3(0.0, cos(theta), 0.0) * aFlat.y + normal * sin(theta) * aFlat.y;
+    vec3 p = base + side * cos(theta) * across + normal * sin(theta) * across;
+
+    // Intro: every card starts tiny at the loader and grows into place.
+    p = mix(uIntroOrigin + (p - uIntroOrigin) * 0.04, p, uIntro);
 
     // Hover lifts the card towards the viewer. The wave itself carries most of the motion;
     // cards only add a faint paper flex on top.
@@ -98,8 +116,9 @@ export const cardVertexShader = /* glsl */ `
     p.z += sin(uv.x * 6.0 - uOpen * 8.0) * sin(uv.y * PI) * uRipple * 0.18;
 
     vec4 mv = modelViewMatrix * vec4(p, 1.0);
-    // Soft falloff towards the edges of the view.
-    vShade = 1.0 - smoothstep(0.55, 1.15, abs(atan(mv.x, -mv.z))) * 0.5;
+    // Soft falloff towards the ends of the strip (sides, or top/bottom when vertical).
+    float edge = mix(abs(atan(mv.x, -mv.z)), abs(atan(mv.y, -mv.z)) * 2.1, uVertical);
+    vShade = 1.0 - smoothstep(0.55, 1.15, edge) * mix(0.5, 0.8, uVertical);
     gl_Position = projectionMatrix * mv;
   }
 `
@@ -120,6 +139,9 @@ export const cardFragmentShader = /* glsl */ `
   uniform float uHole;
   uniform float uHoleWobble;
   uniform float uTime;
+  uniform float uVertical;
+  uniform float uVideo;
+  uniform vec4 uHero;
   varying vec2 vUv;
   varying vec2 vFlat;
   varying float vShade;
@@ -134,15 +156,27 @@ export const cardFragmentShader = /* glsl */ `
     // Profile: an organic hole opens where the ring grows out of the wall. The hole is
     // fixed on the curve (arc length 0), so cards keep sliding through it.
     if (uHole > 0.0) {
-      vec2 d = vec2(uSlotS + vFlat.x, vFlat.y);
+      vec2 d = mix(vec2(uSlotS + vFlat.x, vFlat.y), vec2(vFlat.x, vFlat.y - uSlotS), uVertical);
       float a = atan(d.y, d.x);
       float wob = 0.16 * sin(3.0 * a + uTime * 1.7) + 0.09 * sin(5.0 * a - uTime * 2.3);
       if (length(d) < uHole * (1.0 + uHoleWobble * wob)) discard;
     }
 
-    vec3 color = texture2D(uMap, vUv).rgb;
+    // Opening: the image shrinks into the case study's lead-image slot while the rest
+    // of the card turns into the white panel around it.
+    vec4 slot = mix(vec4(0.0, 0.0, 1.0, 1.0), uHero, uOpen);
+    vec2 local = (vUv - slot.xy) / (slot.zw - slot.xy);
+    vec2 px = fwidth(local);
+    vec2 inX = smoothstep(vec2(0.0), px, local) * (1.0 - smoothstep(vec2(1.0) - px, vec2(1.0), local));
+    float inSlot = inX.x * inX.y;
+    vec3 color = texture2D(uMap, clamp(local, 0.0, 1.0)).rgb;
+    // Video frames arrive sRGB-encoded (image textures are decoded by the GPU), so
+    // decode them here; otherwise they'd be encoded twice and look washed out.
+    vec3 decoded = mix(color / 12.92, pow((color + 0.055) / 1.055, vec3(2.4)), step(0.04045, color));
+    color = mix(color, decoded, uVideo);
     vec4 label = texture2D(uLabel, vUv);
-    color = mix(color, label.rgb, label.a);
+    color = mix(color, label.rgb, label.a * (1.0 - smoothstep(0.0, 0.35, uOpen)));
+    color = mix(vec3(1.0), color, inSlot);
     // Backs of the cards (seen when the ribbon twists) are near-black with a soft sheen.
     if (!gl_FrontFacing) color = vec3(0.012 + 0.02 * vUv.y);
     color *= 1.0 + uHover * 0.06;

@@ -41,29 +41,58 @@ export function buildSlots(projects) {
  */
 export function getLayout(slotCount, width, height) {
   const aspect = width / height
-  const portrait = aspect < 0.9
+  // Portrait screens (phones, upright tablets) get a vertical strip: full-width cards
+  // stacked top to bottom and scrolled up/down.
+  const vertical = aspect < 0.9
   const cardW = 3.2
   const cardH = cardW / CARD_ASPECT
-  const gap = 0.07
-  const fov = portrait ? 60 : 70
-  const tanV = Math.tan((fov * Math.PI) / 360)
   const H = cardH
 
+  if (vertical) {
+    const fov = 50
+    const tanV = Math.tan((fov * Math.PI) / 360)
+    const gap = 0.12
+    const waveDepth = cardW / (0.9 * 2 * tanV * aspect) // card spans 90% of the width
+    return {
+      vertical,
+      cardW,
+      cardH,
+      gap,
+      along: cardH, // card size along the strip
+      pitch: cardH + gap,
+      slotCount,
+      fov,
+      distance: waveDepth,
+      waveDepth,
+      waveAmp: 0.1 * H,
+      waveLength: 7 * H,
+      wavePhase: 0,
+      span: (slotCount / 2 + 1.5) * (cardH + gap),
+      cardsY: 0,
+      floorY: 0,
+    }
+  }
+
+  const gap = 0.07
+  const fov = 70
+  const tanV = Math.tan((fov * Math.PI) / 360)
   // Mean wall depth. On narrow screens the camera backs off so the focused card still fits.
-  const maxCoverage = portrait ? 0.82 : aspect < 1.3 ? 0.58 : 1
+  const maxCoverage = aspect < 1.3 ? 0.58 : 1
   const fitDepth = cardW / (maxCoverage * 2 * tanV * aspect)
   const waveDepth = Math.max(1.66 * H, fitDepth)
 
   return {
+    vertical,
     cardW,
     cardH,
     gap,
+    along: cardW, // card size along the strip
     pitch: cardW + gap, // arc length between neighbouring card centres
     slotCount,
     fov,
     distance: waveDepth,
     waveDepth,
-    waveAmp: (portrait ? 0.2 : 0.34) * H,
+    waveAmp: 0.34 * H,
     waveLength: 4.8 * H,
     wavePhase: -0.93 * H, // x of the nearest point of the wave
     span: (slotCount / 2 + 1.5) * (cardW + gap),

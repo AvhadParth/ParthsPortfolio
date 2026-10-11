@@ -1,13 +1,18 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { panelFx } from './navStore'
 import { PanelShell } from './PanelShell'
 import { posterDataURL } from './textures'
 
 const MIN_GALLERY_ITEMS = 3
 
-function PanelVideo({ project, reducedMotion }) {
+function PanelVideo({ project, reducedMotion, continueFromCard }) {
   return (
     <figure className="panel-figure">
       <video
+        // Pick up where the 3D card's copy of the video was, so the handover is seamless.
+        onLoadedMetadata={(e) => {
+          if (continueFromCard && panelFx.videoTime > 0) e.currentTarget.currentTime = panelFx.videoTime % e.currentTarget.duration
+        }}
         src={project.video}
         poster={project.poster || undefined}
         muted
@@ -41,7 +46,32 @@ function PanelImage({ src, fallback, alt }) {
 }
 
 /** Editorial case-study panel: project info on the left, media column on the right. */
-export function ProjectPanel({ project, index, total, standalone, reducedMotion, onClose }) {
+export function ProjectPanel({ project, index, total, standalone, pending, reducedMotion, onClose }) {
+  const heroRef = useRef()
+
+  // Tell the 3D card where the lead image sits inside the panel (in panel uv, y up),
+  // so the card's image can travel into exactly that slot — and back out on close.
+  const measureHero = useCallback(() => {
+    const hero = heroRef.current
+    const panel = hero?.closest('.panel')
+    if (!hero || !panel || standalone) {
+      panelFx.hero = null
+      return
+    }
+    const h = hero.getBoundingClientRect()
+    const p = panel.getBoundingClientRect()
+    panelFx.hero = [(h.left - p.left) / p.width, 1 - (h.bottom - p.top) / p.height, (h.right - p.left) / p.width, 1 - (h.top - p.top) / p.height]
+  }, [standalone])
+
+  useLayoutEffect(() => {
+    measureHero()
+    window.addEventListener('resize', measureHero)
+    return () => {
+      window.removeEventListener('resize', measureHero)
+      panelFx.hero = null
+    }
+  }, [measureHero])
+
   const images = useMemo(() => {
     const real = project.gallery.map((src, i) => ({ src, fallback: posterDataURL(project, i % 3) }))
     for (let v = real.length + (project.video ? 1 : 0); v < MIN_GALLERY_ITEMS; v++) {
@@ -55,7 +85,15 @@ export function ProjectPanel({ project, index, total, standalone, reducedMotion,
   const counter = `${String(index + 1).padStart(2, '0')} / ${String(total).padStart(2, '0')}`
 
   return (
-    <PanelShell labelledBy="panel-title" closeLabel="Close project" standalone={standalone} reducedMotion={reducedMotion} onClose={onClose}>
+    <PanelShell
+      labelledBy="panel-title"
+      closeLabel="Close project"
+      standalone={standalone}
+      pending={pending}
+      reducedMotion={reducedMotion}
+      onBeforeClose={measureHero}
+      onClose={onClose}
+    >
       <header className="panel-info">
         <h2 id="panel-title" className="panel-title panel-reveal">
           {project.title}
@@ -113,17 +151,22 @@ export function ProjectPanel({ project, index, total, standalone, reducedMotion,
         </p>
       </header>
 
+      {/* The first item is the lead image: the 3D card's image lands exactly on it, so
+          it is already in place (no reveal) when the panel opens from the gallery. */}
       <div className="panel-gallery">
         {project.video && (
-          <div className="panel-reveal">
-            <PanelVideo project={project} reducedMotion={reducedMotion} />
+          <div ref={heroRef} className={standalone ? 'panel-reveal' : undefined}>
+            <PanelVideo project={project} reducedMotion={reducedMotion} continueFromCard={!standalone} />
           </div>
         )}
-        {images.map((img, i) => (
-          <div className="panel-reveal" key={i}>
-            <PanelImage src={img.src} fallback={img.fallback} alt={`${project.title} — image ${i + 1}`} />
-          </div>
-        ))}
+        {images.map((img, i) => {
+          const isHero = !project.video && i === 0
+          return (
+            <div ref={isHero ? heroRef : undefined} className={isHero && !standalone ? undefined : 'panel-reveal'} key={i}>
+              <PanelImage src={img.src} fallback={img.fallback} alt={`${project.title} — image ${i + 1}`} />
+            </div>
+          )
+        })}
       </div>
     </PanelShell>
   )

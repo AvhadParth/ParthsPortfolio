@@ -5,7 +5,7 @@ import { nav } from './navStore'
  * Wheel / trackpad, pointer drag (mouse + touch) and keyboard navigation for the drum.
  * Everything writes to `nav.target`; the render loop eases towards it.
  */
-export function useGalleryControls(stageRef, { enabled, slotWidthPx, onActivate, onTap }) {
+export function useGalleryControls(stageRef, { enabled, slotWidthPx, isVertical, onActivate, onTap }) {
   useEffect(() => {
     const stage = stageRef.current
     if (!stage || !enabled) return
@@ -35,13 +35,15 @@ export function useGalleryControls(stageRef, { enabled, slotWidthPx, onActivate,
     let lastT = 0
     let speed = 0 // px per ms
     let pointerId = null
+    // The strip runs top-to-bottom on portrait screens, so drags follow that axis.
+    const along = (e) => (isVertical() ? e.clientY : e.clientX)
 
     const onPointerDown = (e) => {
       if (nav.locked || e.button > 0) return
       pointerId = e.pointerId
       nav.pointerClient.x = e.clientX
       nav.pointerClient.y = e.clientY
-      startX = lastX = e.clientX
+      startX = lastX = along(e)
       lastT = performance.now()
       speed = 0
       nav.dragging = true
@@ -56,9 +58,9 @@ export function useGalleryControls(stageRef, { enabled, slotWidthPx, onActivate,
       nav.pointerInside = stage.contains(e.target)
       if (!nav.dragging || e.pointerId !== pointerId) return
       const now = performance.now()
-      const dx = e.clientX - lastX
+      const dx = along(e) - lastX
       speed = speed * 0.6 + (dx / Math.max(1, now - lastT)) * 0.4
-      lastX = e.clientX
+      lastX = along(e)
       lastT = now
       nav.target -= dx / slotWidthPx()
     }
@@ -105,5 +107,5 @@ export function useGalleryControls(stageRef, { enabled, slotWidthPx, onActivate,
       window.removeEventListener('keydown', onKeyDown)
       nav.pointerInside = false
     }
-  }, [stageRef, enabled, slotWidthPx, onActivate, onTap])
+  }, [stageRef, enabled, slotWidthPx, isVertical, onActivate, onTap])
 }

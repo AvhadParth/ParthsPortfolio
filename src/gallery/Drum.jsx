@@ -2,9 +2,9 @@ import { useEffect, useMemo, useRef } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import gsap from 'gsap'
-import { CARD_ASPECT, getPanelRect } from './config'
+import { CARD_ASPECT, centerDepth, getPanelRect } from './config'
 import { createCurve } from './curve'
-import { nav, nearestPositionFor, profileFx } from './navStore'
+import { nav, nearestPositionFor, panelFx, profileFx } from './navStore'
 import { cardFragmentShader, cardVertexShader, createCardGeometry, createCardUniforms } from './cardShader'
 
 const damp = THREE.MathUtils.damp
@@ -30,12 +30,14 @@ function wrapRel(value, n) {
  * the case study). Solved per side because the wave is asymmetric.
  */
 function solveNeighbourPush(curve, layout, width, height, side) {
-  const tanX = Math.tan((layout.fov * Math.PI) / 360) * (width / height)
+  const tanY = Math.tan((layout.fov * Math.PI) / 360)
   const rect = getPanelRect(width, height)
-  const target = 1 - (rect.left * 0.5) / (width / 2)
+  // Screen extent and panel margin along the strip's axis.
+  const tanAlong = layout.vertical ? tanY : tanY * (width / height)
+  const target = layout.vertical ? 1 - (rect.top * 0.5) / (height / 2) : 1 - (rect.left * 0.5) / (width / 2)
   const ndc = (k) => {
-    const p = curve.at(side * ((1 + k) * layout.pitch - layout.cardW / 2))
-    return (side * p.x) / (-p.z * tanX)
+    const p = curve.at(side * ((1 + k) * layout.pitch - layout.along / 2))
+    return (side * p.x) / (-p.z * tanAlong)
   }
   if (ndc(0) >= target) return 0
   if (ndc(4) < target) return 4
@@ -96,32 +98,49 @@ export function Drum({ slots, textures, layout, phase, activeSlot, reducedMotion
   useEffect(() => {
     const raycaster = new THREE.Raycaster()
     const ndc = new THREE.Vector2()
+    const probe = new THREE.Ray()
     nav.pick = (clientX, clientY) => {
       ndc.set((clientX / window.innerWidth) * 2 - 1, -(clientY / window.innerHeight) * 2 + 1)
       raycaster.setFromCamera(ndc, camera)
-      const hit = curve.intersect(raycaster.ray)
-      if (!hit || Math.abs(hit.y - layout.cardsY) > layout.cardH / 2) return -1
+      const ray = raycaster.ray
+      if (layout.vertical) {
+        // The curve lives in the x/z plane; a vertical strip is that plane turned on
+        // its side (curve x → world -y), so turn the ray the same way.
+        probe.origin.set(-(ray.origin.y - layout.cardsY), ray.origin.x, ray.origin.z)
+        probe.direction.set(-ray.direction.y, ray.direction.x, ray.direction.z)
+      } else {
+        probe.origin.set(ray.origin.x, ray.origin.y - layout.cardsY, ray.origin.z)
+        probe.direction.copy(ray.direction)
+      }
+      const hit = curve.intersect(probe)
+      const across = layout.vertical ? layout.cardW : layout.cardH
+      if (!hit || Math.abs(hit.y) > across / 2) return -1
       const s = slotS.current
-      for (let i = 0; i < s.length; i++) if (Math.abs(hit.s - s[i]) <= layout.cardW / 2) return i
+      for (let i = 0; i < s.length; i++) if (Math.abs(hit.s - s[i]) <= layout.along / 2) return i
       return -1
     }
     return () => {
       nav.pick = null
     }
-  }, [camera, curve, layout.cardH, layout.cardW, layout.cardsY])
+  }, [camera, curve, layout.cardH, layout.cardW, layout.cardsY, layout.along, layout.vertical])
 
-  // Intro: cards fade in while the wall glides into place.
+  // Intro: as the loader fades, every card grows out of its spot into place.
   useEffect(() => {
     if (!introKey) return
     const fade = materials.map((m) => m.uniforms.uOpacity)
+    const grow = materials.map((m) => m.uniforms.uIntro)
     if (reducedMotion) {
       fade.forEach((u) => (u.value = 1))
+      grow.forEach((u) => (u.value = 1))
       return
     }
-    nav.current = nav.target - 1.6
     fade.forEach((u) => (u.value = 0))
-    const tween = gsap.to(fade, { value: 1, duration: 1.4, ease: 'power2.out', stagger: 0.04 })
-    return () => tween.kill()
+    grow.forEach((u) => (u.value = 0))
+    const tl = gsap
+      .timeline()
+      .to(fade, { value: 1, duration: 0.35, ease: 'power1.out' }, 0)
+      .to(grow, { value: 1, duration: 1.25, ease: 'expo.out' }, 0)
+    return () => tl.kill()
   }, [introKey, materials, reducedMotion])
 
   // Open / close timelines.
@@ -137,14 +156,15 @@ export function Drum({ slots, textures, layout, phase, activeSlot, reducedMotion
       returnTo.current = nav.target
       const center = nearestPositionFor(activeSlot, nav.current, slots.length)
       const travel = Math.abs(center - nav.current)
+      // Under a second in total: the card lifts, flattens into the panel and its image
+      // slides into the case study's lead-image slot.
       const tl = gsap.timeline({ onComplete: onOpened })
-      tl.to(nav, { current: center, target: center, duration: travel < 0.01 ? 0 : Math.min(0.9, 0.4 + travel * 0.18) * quick, ease: 'power3.inOut' })
-        .addLabel('morph', '-=0.1')
-        .to(others, { value: 1, duration: 0.9 * quick, ease: 'power2.out' }, 'morph')
-        .to(spread.current, { value: 1, duration: 1.1 * quick, ease: 'expo.inOut' }, 'morph')
-        .to(selected.uOpen, { value: 1, duration: 1.05 * quick, ease: 'expo.inOut' }, 'morph')
-        .to(selected.uRipple, { value: reducedMotion ? 0 : 1, duration: 0.5, ease: 'sine.inOut', yoyo: true, repeat: 1 }, 'morph')
-        .to(selected.uWhite, { value: 1, duration: 0.5 * quick, ease: 'power2.in' }, 'morph+=0.4')
+      tl.to(nav, { current: center, target: center, duration: travel < 0.01 ? 0 : Math.min(0.5, 0.25 + travel * 0.12) * quick, ease: 'power3.inOut' })
+        .addLabel('morph', '-=0.12')
+        .to(others, { value: 1, duration: 0.5 * quick, ease: 'power2.out' }, 'morph')
+        .to(spread.current, { value: 1, duration: 0.75 * quick, ease: 'power3.inOut' }, 'morph')
+        .to(selected.uOpen, { value: 1, duration: 0.75 * quick, ease: 'power3.inOut' }, 'morph')
+        .to(selected.uRipple, { value: reducedMotion ? 0 : 0.6, duration: 0.3, ease: 'sine.inOut', yoyo: true, repeat: 1 }, 'morph')
       return () => tl.kill()
     }
 
@@ -156,12 +176,11 @@ export function Drum({ slots, textures, layout, phase, activeSlot, reducedMotion
           onClosed()
         },
       })
-      tl.to(selected.uWhite, { value: 0, duration: 0.6 * quick, ease: 'power2.inOut' })
-        .to(selected.uOpen, { value: 0, duration: 1 * quick, ease: 'expo.inOut' }, '<')
-        .to(selected.uRipple, { value: reducedMotion ? 0 : 0.8, duration: 0.45, ease: 'sine.inOut', yoyo: true, repeat: 1 }, '<')
-        .to(spread.current, { value: 0, duration: 1 * quick, ease: 'expo.inOut' }, '<')
-        .to(others, { value: 0, duration: 0.8 * quick, ease: 'power2.out' }, '<0.35')
-        .to(nav, { current: back, target: back, duration: Math.abs(back - nav.current) < 0.01 ? 0 : 0.8 * quick, ease: 'power3.inOut' }, '<0.1')
+      tl.to(selected.uOpen, { value: 0, duration: 0.55 * quick, ease: 'power3.inOut' })
+        .to(selected.uRipple, { value: reducedMotion ? 0 : 0.5, duration: 0.25, ease: 'sine.inOut', yoyo: true, repeat: 1 }, '<')
+        .to(spread.current, { value: 0, duration: 0.55 * quick, ease: 'power3.inOut' }, '<')
+        .to(others, { value: 0, duration: 0.45 * quick, ease: 'power2.out' }, '<0.1')
+        .to(nav, { current: back, target: back, duration: Math.abs(back - nav.current) < 0.01 ? 0 : 0.5 * quick, ease: 'power3.inOut' }, '<')
       return () => tl.kill()
     }
   }, [phase, activeSlot, materials, slots.length, reducedMotion, onOpened, onClosed])
@@ -197,9 +216,9 @@ export function Drum({ slots, textures, layout, phase, activeSlot, reducedMotion
     const w = wave.current
     // Wheel/trackpad scrolling keeps the resting wave exactly (as on the reference).
     // Only dragging the strip lets it swell, and gently.
-    const dragSwell = nav.dragging ? THREE.MathUtils.clamp((Math.abs(v) - 2) / 4, 0, 0.45) : 0
+    const dragSwell = nav.dragging && !layout.vertical ? THREE.MathUtils.clamp((Math.abs(v) - 2) / 4, 0, 0.45) : 0
     springStep(w.energy, dragSwell, dt, 18, 6.5)
-    springStep(w.lean, nav.dragging ? THREE.MathUtils.clamp(v / 4, -1, 1) * 0.5 : 0, dt, 18, 6.5)
+    springStep(w.lean, nav.dragging && !layout.vertical ? THREE.MathUtils.clamp(v / 4, -1, 1) * 0.5 : 0, dt, 18, 6.5)
     // At the drag cap (0.45) the focused card grows from ~53% to ~57% of the screen
     // height while the strip beside it sinks back. The wave keeps its length.
     const e = THREE.MathUtils.clamp(w.energy.x, 0, 1)
@@ -224,6 +243,8 @@ export function Drum({ slots, textures, layout, phase, activeSlot, reducedMotion
       slotS.current[i] = s
       u.uSlotS.value = s
       u.uCardsY.value = layout.cardsY
+      u.uVertical.value = layout.vertical ? 1 : 0
+      u.uIntroOrigin.value.set(0, layout.cardsY, -centerDepth(layout))
       u.uVelocity.value = nav.velocity * settle
       u.uTwist.value = twist
       u.uHover.value = damp(u.uHover.value, hovered.current === i && !nav.locked ? 1 : 0, 8, dt)
@@ -231,7 +252,15 @@ export function Drum({ slots, textures, layout, phase, activeSlot, reducedMotion
       u.uHoleWobble.value = profileFx.wobble
       u.uTime.value = state.clock.elapsedTime
     })
-    if (activeSlot != null && materials[activeSlot]) updateFlatTarget(materials[activeSlot].uniforms)
+    if (activeSlot != null && materials[activeSlot]) {
+      const u = materials[activeSlot].uniforms
+      updateFlatTarget(u)
+      const hero = panelFx.hero
+      if (hero) u.uHero.value.set(hero[0], hero[1], hero[2], hero[3])
+      else u.uHero.value.set(0, 0, 1, 1)
+      const video = textures.get(slots[activeSlot].project.id).video
+      if (video) panelFx.videoTime = video.currentTime
+    }
 
     // Videos: only projects on or near screen play; everything else pauses. Cards show
     // the poster until their video has a frame ready.
@@ -261,6 +290,7 @@ export function Drum({ slots, textures, layout, phase, activeSlot, reducedMotion
       const entry = textures.get(slot.project.id)
       const ready = entry.video && entry.video.readyState >= 2 && (!reducedMotion || entry.video.currentTime > 0)
       materials[i].uniforms.uMap.value = ready ? entry.videoTexture : entry.media
+      materials[i].uniforms.uVideo.value = ready ? 1 : 0
     })
 
     // Hover picking + cursor.

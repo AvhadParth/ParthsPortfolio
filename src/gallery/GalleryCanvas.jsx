@@ -92,7 +92,7 @@ function Scene({ cardCanvases, ...props }) {
   return (
     <>
       <color attach="background" args={['#000000']} />
-      {props.active && <Floor layout={layout} />}
+      {props.active && !layout.vertical && <Floor layout={layout} />}
       <group visible={props.active}>
         <Drum {...props} textures={textures} layout={layout} />
       </group>

@@ -21,6 +21,12 @@ export const profileFx = {
   holeRadius: 0, // world units, hole radius on the wall at full reveal
 }
 
+// Handover between the 3D card and the DOM case-study panel.
+export const panelFx = {
+  hero: null, // [x0, y0, x1, y1] of the panel's lead image in panel uv, or null
+  videoTime: 0, // playback position of the open card's video, so the panel's copy can match
+}
+
 export const wrapIndex = (i, n) => ((i % n) + n) % n
 
 /** Nearest drum position that centres `slot`, measured from `from`. */
