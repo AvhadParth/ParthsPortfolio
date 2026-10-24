@@ -67,6 +67,12 @@ export function useGalleryControls(stageRef, { enabled, slotWidthPx, isVertical,
       const moved = Math.abs(lastX - startX) > 6
       // Hand the release speed to the render loop as momentum (slots per second).
       if (moved && performance.now() - lastT < 80) nav.fling = (-speed * 1000 * GAIN) / slotWidthPx()
+      // Giant wheel (portrait): like a Ferris wheel stopping at the boarding point,
+      // land exactly on a card — including where the momentum would have carried it.
+      if (moved && isVertical()) {
+        nav.target = Math.round(nav.target + nav.fling / 2.2)
+        nav.fling = 0
+      }
       if (!moved) onTap(e.clientX, e.clientY)
     }
 

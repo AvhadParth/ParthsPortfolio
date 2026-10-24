@@ -35,10 +35,18 @@ function solveNeighbourPush(curve, layout, width, height, side) {
   // Screen extent and panel margin along the strip's axis.
   const tanAlong = layout.vertical ? tanY : tanY * (width / height)
   const target = layout.vertical ? 1 - (rect.top * 0.5) / (height / 2) : 1 - (rect.left * 0.5) / (width / 2)
-  const ndc = (k) => {
-    const p = curve.at(side * ((1 + k) * layout.pitch - layout.along / 2))
-    return (side * p.x) / (-p.z * tanAlong)
-  }
+  const ndc = layout.wheelR
+    ? (k) => {
+        // Giant wheel: the neighbour's nearer edge (its top when below, its bottom
+        // when above) on screen, in NDC along the vertical axis.
+        const a = ((1 + k) * layout.pitch) / layout.wheelR
+        const z = layout.waveDepth + layout.wheelR * (1 - Math.cos(a)) * layout.wheelTilt
+        return (layout.wheelR * Math.sin(a) - layout.cardH / 2) / (z * tanAlong)
+      }
+    : (k) => {
+        const p = curve.at(side * ((1 + k) * layout.pitch - layout.along / 2))
+        return (side * p.x) / (-p.z * tanAlong)
+      }
   if (ndc(0) >= target) return 0
   if (ndc(4) < target) return 4
   let lo = 0
@@ -68,6 +76,41 @@ export function Drum({ slots, textures, layout, phase, activeSlot, reducedMotion
   const playing = useRef(new Set())
   // Live wave: `energy` deepens it with speed, `lean` slides the crest with direction.
   const wave = useRef({ energy: { x: 0, v: 0 }, lean: { x: 0, v: 0 } })
+  // Giant wheel (phones): gondola swing, a lightly damped pendulum.
+  const sway = useRef({ x: 0, v: 0 })
+  const spokes = useRef()
+
+  // Faint rim and spokes so the wheel reads as a wheel. The rim is static per layout;
+  // the spokes follow the cards each frame.
+  const wheelLines = useMemo(() => {
+    if (!layout.wheelR) return null
+    const R = layout.wheelR
+    const top = layout.cardsY + layout.cardH / 2
+    const rimPos = []
+    const N = 160
+    for (let i = 0; i < N; i++) {
+      for (const k of [i, i + 1]) {
+        const a = (k / N) * Math.PI * 2
+        rimPos.push(R * (Math.cos(a) - 1), top - R * Math.sin(a), -layout.waveDepth - R * (1 - Math.cos(a)) * layout.wheelTilt)
+      }
+    }
+    const rim = new THREE.BufferGeometry()
+    rim.setAttribute('position', new THREE.Float32BufferAttribute(rimPos, 3))
+    const spokeGeo = new THREE.BufferGeometry()
+    spokeGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(slots.length * 6), 3))
+    const material = new THREE.LineBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0.13, depthWrite: false })
+    const hub = [-R, top, -layout.waveDepth - R * layout.wheelTilt]
+    return { rim, spokeGeo, material, hub }
+  }, [layout.wheelR, layout.wheelTilt, layout.cardH, layout.cardsY, layout.waveDepth, slots.length])
+  useEffect(
+    () => () => {
+      if (!wheelLines) return
+      wheelLines.rim.dispose()
+      wheelLines.spokeGeo.dispose()
+      wheelLines.material.dispose()
+    },
+    [wheelLines],
+  )
 
   const { waveDepth, waveAmp, waveLength, wavePhase, span } = layout
   const curve = useMemo(
@@ -117,7 +160,32 @@ export function Drum({ slots, textures, layout, phase, activeSlot, reducedMotion
       }
       return curve.intersect(probe)
     }
+    const wheelPick = (clientX, clientY) => {
+      ndc.set((clientX / window.innerWidth) * 2 - 1, -(clientY / window.innerHeight) * 2 + 1)
+      raycaster.setFromCamera(ndc, camera)
+      const { origin: o, direction: d } = raycaster.ray
+      const s = slotS.current
+      const R = layout.wheelR
+      let best = -1
+      let bestZ = -Infinity
+      for (let i = 0; i < s.length; i++) {
+        const a = s[i] / R
+        if (Math.abs(a) > Math.PI / 2) continue
+        const z = -layout.waveDepth - R * (1 - Math.cos(a)) * layout.wheelTilt
+        const t = (z - o.z) / d.z
+        const x = o.x + d.x * t
+        const y = o.y + d.y * t
+        const cx = R * (Math.cos(a) - 1)
+        const cy = layout.cardsY - R * Math.sin(a)
+        if (Math.abs(x - cx) <= layout.cardW / 2 && Math.abs(y - cy) <= layout.cardH / 2 && z > bestZ) {
+          best = i
+          bestZ = z
+        }
+      }
+      return best
+    }
     nav.pick = (clientX, clientY) => {
+      if (layout.wheelR) return wheelPick(clientX, clientY)
       const hit = nav.hit(clientX, clientY)
       const across = layout.vertical ? layout.cardW : layout.cardH
       if (!hit || Math.abs(hit.y) > across / 2) return -1
@@ -129,7 +197,7 @@ export function Drum({ slots, textures, layout, phase, activeSlot, reducedMotion
       nav.pick = null
       nav.hit = null
     }
-  }, [camera, curve, layout.cardH, layout.cardW, layout.cardsY, layout.along, layout.vertical])
+  }, [camera, curve, layout.cardH, layout.cardW, layout.cardsY, layout.along, layout.vertical, layout.wheelR, layout.wheelTilt, layout.waveDepth])
 
   // Intro: as the loader fades, every card grows out of its spot into place.
   useEffect(() => {
@@ -269,6 +337,12 @@ export function Drum({ slots, textures, layout, phase, activeSlot, reducedMotion
       d.a = damp(d.a, f.a, follow[k], dt)
     })
 
+    // Giant wheel: gondolas trail the wheel's motion and rock gently after it stops.
+    if (layout.wheelR) {
+      const target = reducedMotion || nav.locked ? 0 : THREE.MathUtils.clamp(-nav.velocity * 0.045, -0.3, 0.3)
+      springStep(sway.current, target, dt, 28, 2.4)
+    }
+
     const spreadValue = spread.current.value
     const pushR = spreadValue > 0 ? spreadValue * solveNeighbourPush(curve, layout, size.width, size.height, 1) : 0
     const pushL = spreadValue > 0 ? spreadValue * solveNeighbourPush(curve, layout, size.width, size.height, -1) : 0
@@ -282,6 +356,14 @@ export function Drum({ slots, textures, layout, phase, activeSlot, reducedMotion
       u.uSlotS.value = s
       u.uCardsY.value = layout.cardsY
       u.uVertical.value = layout.vertical ? 1 : 0
+      u.uWheel.value = layout.wheelR ? 1 : 0
+      if (layout.wheelR) {
+        u.uWheelR.value = layout.wheelR
+        u.uWheelDepth.value = layout.waveDepth
+        u.uWheelTilt.value = layout.wheelTilt
+        u.uCardH.value = layout.cardH
+        u.uSway.value = sway.current.x
+      }
       u.uIntroOrigin.value.set(0, layout.cardsY, -centerDepth(layout))
       u.uVelocity.value = nav.velocity * settle
       u.uTwist.value = twist
@@ -292,6 +374,18 @@ export function Drum({ slots, textures, layout, phase, activeSlot, reducedMotion
       u.uHoleWobble.value = profileFx.wobble
       u.uTime.value = state.clock.elapsedTime
     })
+    if (wheelLines && spokes.current) {
+      const pos = wheelLines.spokeGeo.attributes.position
+      const R = layout.wheelR
+      const top = layout.cardsY + layout.cardH / 2
+      for (let i = 0; i < slots.length; i++) {
+        const ang = slotS.current[i] / R
+        pos.setXYZ(i * 2, wheelLines.hub[0], wheelLines.hub[1], wheelLines.hub[2])
+        pos.setXYZ(i * 2 + 1, R * (Math.cos(ang) - 1), top - R * Math.sin(ang), -layout.waveDepth - R * (1 - Math.cos(ang)) * layout.wheelTilt)
+      }
+      pos.needsUpdate = true
+      spokes.current.visible = !nav.locked && profileFx.reveal < 0.01
+    }
     if (activeSlot != null && materials[activeSlot]) {
       const u = materials[activeSlot].uniforms
       updateFlatTarget(u)
@@ -344,6 +438,12 @@ export function Drum({ slots, textures, layout, phase, activeSlot, reducedMotion
 
   return (
     <group>
+      {wheelLines && (
+        <group renderOrder={-1}>
+          <lineSegments ref={spokes} geometry={wheelLines.spokeGeo} material={wheelLines.material} frustumCulled={false} />
+          <lineSegments geometry={wheelLines.rim} material={wheelLines.material} frustumCulled={false} visible={activeSlot == null} />
+        </group>
+      )}
       {slots.map((slot, i) => (
         <mesh
           key={slot.key}

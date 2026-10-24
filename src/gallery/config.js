@@ -52,7 +52,8 @@ export function getLayout(slotCount, width, height) {
     const fov = 50
     const tanV = Math.tan((fov * Math.PI) / 360)
     const gap = 0.12
-    const waveDepth = cardW / (0.9 * 2 * tanV * aspect) // card spans 90% of the width
+    const waveDepth = cardW / (0.8 * 2 * tanV * aspect) // focused card spans 80% of the width
+    const visibleH = 2 * waveDepth * tanV
     return {
       vertical,
       cardW,
@@ -70,6 +71,9 @@ export function getLayout(slotCount, width, height) {
       span: (slotCount / 2 + 1.5) * (cardH + gap),
       cardsY: 0,
       floorY: 0,
+      // Giant wheel: radius about the screen's height, hub off-screen to the left.
+      wheelR: visibleH * 0.95,
+      wheelTilt: 0.32,
     }
   }
 

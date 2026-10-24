@@ -46,6 +46,14 @@ export function createCardUniforms(media, label, cardAspect, curve) {
     uDentRadius: { value: 0.6 },
     uVideo: { value: 0 }, // 1 while uMap is a video (needs manual sRGB decoding)
     uVertical: { value: 0 }, // 1 = strip runs top-to-bottom (portrait screens)
+    // Phones: a giant (Ferris) wheel. Cards hang like gondolas from the rim of a wheel
+    // whose hub sits off-screen to the left, stay upright and swing with its motion.
+    uWheel: { value: 0 },
+    uWheelR: { value: 10 },
+    uWheelDepth: { value: 8 },
+    uWheelTilt: { value: 0.3 }, // how far the rim leans away at the top and bottom
+    uSway: { value: 0 }, // gondola swing angle, radians
+    uCardH: { value: 1 },
     uIntro: { value: 1 }, // 0 → 1: cards grow out of the loader
     uIntroOrigin: { value: new THREE.Vector3() },
     // Where the case study's lead image sits inside the panel (uv: x0, y0, x1, y1).
@@ -70,6 +78,12 @@ export const cardVertexShader = /* glsl */ `
   uniform vec2 uFlatScale;
   uniform vec3 uFlatCenter;
   uniform float uVertical;
+  uniform float uWheel;
+  uniform float uWheelR;
+  uniform float uWheelDepth;
+  uniform float uWheelTilt;
+  uniform float uSway;
+  uniform float uCardH;
   uniform float uIntro;
   uniform vec3 uIntroOrigin;
   uniform vec3 uDents[3];
@@ -78,6 +92,7 @@ export const cardVertexShader = /* glsl */ `
   varying vec2 vFlat;
   varying float vShade;
   varying float vDent;
+  varying vec2 vPlane;
 
   // Curve lookup with manual linear interpolation (float textures aren't filterable everywhere).
   vec4 curveAt(float s) {
@@ -124,6 +139,19 @@ export const cardVertexShader = /* glsl */ `
     p += -normal * press * 0.34 + alongDir * gather.x * 0.22 + side * gather.y * 0.22;
     vDent = press;
 
+    // Giant wheel: the card's top-centre hangs from a point on the rim; the card swings
+    // rigidly about that point.
+    vPlane = vec2(0.0);
+    if (uWheel > 0.5) {
+      float ang = uSlotS / uWheelR;
+      vec3 pivot = vec3(uWheelR * (cos(ang) - 1.0), uCardsY + uCardH * 0.5 - uWheelR * sin(ang), -uWheelDepth - uWheelR * (1.0 - cos(ang)) * uWheelTilt);
+      vec2 hang = aFlat - vec2(0.0, uCardH * 0.5);
+      float cs = cos(uSway), sn = sin(uSway);
+      p = pivot + vec3(hang.x * cs - hang.y * sn, hang.x * sn + hang.y * cs, 0.0);
+      vPlane = p.xy - vec2(0.0, uCardsY);
+      vDent = 0.0;
+    }
+
     // Intro: every card starts tiny at the loader and grows into place.
     p = mix(uIntroOrigin + (p - uIntroOrigin) * 0.04, p, uIntro);
 
@@ -164,12 +192,14 @@ export const cardFragmentShader = /* glsl */ `
   uniform float uHoleWobble;
   uniform float uTime;
   uniform float uVertical;
+  uniform float uWheel;
   uniform float uVideo;
   uniform vec4 uHero;
   varying vec2 vUv;
   varying vec2 vFlat;
   varying float vShade;
   varying float vDent;
+  varying vec2 vPlane;
 
   float roundedBox(vec2 uv, float aspect, float r) {
     vec2 p = (uv - 0.5) * vec2(aspect, 1.0);
@@ -182,6 +212,7 @@ export const cardFragmentShader = /* glsl */ `
     // fixed on the curve (arc length 0), so cards keep sliding through it.
     if (uHole > 0.0) {
       vec2 d = mix(vec2(uSlotS + vFlat.x, vFlat.y), vec2(vFlat.x, vFlat.y - uSlotS), uVertical);
+      d = mix(d, vPlane, uWheel);
       float a = atan(d.y, d.x);
       float wob = 0.16 * sin(3.0 * a + uTime * 1.7) + 0.09 * sin(5.0 * a - uTime * 2.3);
       if (length(d) < uHole * (1.0 + uHoleWobble * wob)) discard;
