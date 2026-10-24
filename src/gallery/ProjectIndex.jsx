@@ -1,14 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
 import { posterDataURL } from './textures'
 
+const stillFor = (project) => project.poster || project.cover || posterDataURL(project, 0)
+
 /**
  * Preview card centred on the hovered (or keyboard-focused) name, which stays readable
- * on top of it. Glides between names; plays the project's scrolling recording, or shows
- * its poster/placeholder.
+ * on top of it. Glides between names and shows the project's poster image (preloaded
+ * when the list opens, so it appears instantly).
  */
 function Preview({ project, anchor, reducedMotion }) {
   const ref = useRef()
-  const videoRef = useRef()
   const state = useRef({ x: anchor.x, y: anchor.y, tx: anchor.x, ty: anchor.y, tilt: 0 })
 
   useEffect(() => {
@@ -34,20 +35,10 @@ function Preview({ project, anchor, reducedMotion }) {
     return () => cancelAnimationFrame(raf)
   }, [reducedMotion])
 
-  useEffect(() => {
-    const video = videoRef.current
-    if (video && !reducedMotion) video.play().catch(() => {})
-  }, [project, reducedMotion])
-
-  const still = project.poster || project.cover || posterDataURL(project, 0)
   return (
     <div ref={ref} className="index-preview" aria-hidden="true">
       <div className="index-preview-card">
-      {project.video ? (
-        <video ref={videoRef} key={project.id} src={project.video} poster={still} muted loop playsInline preload="auto" />
-      ) : (
-        <img key={project.id} src={still} alt="" />
-      )}
+        <img key={project.id} src={stillFor(project)} alt="" width="1280" height="752" decoding="async" />
       </div>
     </div>
   )
@@ -61,6 +52,15 @@ export function ProjectIndex({ projects, onOpen, reducedMotion }) {
   const [active, setActive] = useState(null)
   const [anchor, setAnchor] = useState({ x: 0, y: 0 })
   const finePointer = useRef(typeof window !== 'undefined' && window.matchMedia('(pointer: fine)').matches)
+
+  // Fetch every preview image as soon as the list opens, so hovering is instant.
+  useEffect(() => {
+    projects.forEach((p) => {
+      const img = new Image()
+      img.decoding = 'async'
+      img.src = stillFor(p)
+    })
+  }, [projects])
 
   // Anchor the preview to the middle of the name itself.
   const showFor = (index, el) => {
