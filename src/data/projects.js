@@ -135,6 +135,20 @@ export const projects = [
     palette: ['#f6f1e7', '#2d2a6e', '#1f1d3d'],
   },
   {
+    id: 'little-cubbie',
+    title: 'Little Cubbie',
+    category: 'Landing Page',
+    year: '',
+    summary: 'Landing page for Little Cubbie, story toys with a tiny chip inside: tap one on a phone and it tells your child stories, songs and games.',
+    description: '',
+    technologies: [],
+    // Temporary address; swap in the brand's own domain once it goes live.
+    links: [{ label: 'Live site', href: 'https://littlecubbies.vercel.app/?cubbie=ganesh' }],
+    ...media('little-cubbie'),
+    gallery: [2, 3, 4, 5].map((n) => `/images/projects/little-cubbie-${n}.webp`),
+    palette: ['#bfe3ff', '#2f3fd8', '#1d2559'],
+  },
+  {
     id: 'shiorra',
     title: 'Shiorra',
     category: 'Wellness E-commerce',
