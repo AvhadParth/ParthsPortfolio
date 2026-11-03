@@ -165,11 +165,12 @@ export const projects = [
     title: 'Yobo',
     category: 'Lingerie E-commerce',
     year: '',
-    summary: 'E-commerce website for YOBO, a lingerie brand making bras and briefs for real bodies.',
+    summary: 'E-commerce website for YOBO, a European lingerie brand now in India, making bras and briefs for real bodies.',
     description: '',
     technologies: [],
     links: [{ label: 'Live site', href: 'https://yobo-beta.vercel.app' }],
     ...media('yobo'),
+    gallery: [2, 3, 4, 5].map((n) => `/images/projects/yobo-${n}.webp`),
     palette: ['#f4efe9', '#5a1f3d', '#1c1c1c'],
   },
   {
