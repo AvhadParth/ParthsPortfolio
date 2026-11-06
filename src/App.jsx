@@ -1,5 +1,5 @@
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { profile, projects } from './data/projects'
+import { profile, projects, startProjectId } from './data/projects'
 import { buildSlots, getLayout, getRingHolePx, isLowPowerDevice, isWebGLAvailable, prefersReducedMotion } from './gallery/config'
 import { nav, nearestPositionFor, wrapIndex } from './gallery/navStore'
 import { composeLabel, composeMedia, ensureFonts } from './gallery/textures'
@@ -10,6 +10,9 @@ import { ProjectIndex } from './gallery/ProjectIndex'
 import { CornerNav, Loader, ProfileOverlay } from './gallery/Interface'
 
 const MIN_LOADER_MS = 1100
+// Gallery position (in slots) that centres the start project. Set before the scene mounts.
+const START_SLOT = Math.max(0, projects.findIndex((p) => p.id === startProjectId))
+nav.target = nav.current = START_SLOT
 const HOME_TITLE = document.title
 
 // Each project has its own address (/projects/<id>), so it can be linked to directly
@@ -184,7 +187,7 @@ export default function App() {
   const goHome = useCallback(() => {
     setProfileOpen(false)
     if (canUse3D) setView('featured')
-    nav.target = Math.round(nav.target / slots.length) * slots.length
+    nav.target = Math.round((nav.target - START_SLOT) / slots.length) * slots.length + START_SLOT
   }, [canUse3D, slots.length])
 
   const onRingHidden = useCallback(() => setRingMounted(false), [])

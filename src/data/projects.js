@@ -108,6 +108,9 @@ const media = (id) => ({
   gallery: [`/images/projects/${id}-2.webp`, `/images/projects/${id}-3.webp`],
 })
 
+// The project the gallery is centred on when the site opens (and when "home" is clicked).
+export const startProjectId = 'aeroplane-rice'
+
 export const projects = [
   {
     id: 'libre',
