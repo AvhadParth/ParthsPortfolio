@@ -129,8 +129,7 @@ export const projects = [
     summary: 'Landing page for Little Cubbie, story toys with a tiny chip inside: tap one on a phone and it tells your child stories, songs and games.',
     description: '',
     technologies: [],
-    // Temporary address; swap in the brand's own domain once it goes live.
-    links: [{ label: 'Live site', href: 'https://littlecubbies.vercel.app/?cubbie=ganesh' }],
+    links: [{ label: 'Live site', href: 'https://campaign.littlecubbie.com' }],
     ...media('little-cubbie'),
     gallery: [2, 3, 4, 5].map((n) => `/images/projects/little-cubbie-${n}.webp`),
     palette: ['#bfe3ff', '#2f3fd8', '#1d2559'],
